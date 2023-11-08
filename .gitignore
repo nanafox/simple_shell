@@ -1,0 +1,11 @@
+*
+!/**/
+
+!*.h
+!*.c
+!tests/
+!*.md
+!.gitignore
+!AUTHORS
+
+main.c
