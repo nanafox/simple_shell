@@ -8,4 +8,7 @@
 !.gitignore
 !AUTHORS
 
+TEST_SUITE/
+allowed_functions
 main.c
+runchecker.bash
