@@ -24,6 +24,7 @@ int parse_line(char *line, path_t *path_list)
 
 	/* now let's all the commands provided by the user */
 	commands = _strtok(line, "\n;");
+
 	if (commands == NULL)
 	{
 		perror("_strtok");
@@ -61,7 +62,6 @@ int parse_and_execute(char **commands, path_t *path_list, char *line)
 				line, exit_code);
 		if (exit_code != NOT_BUILTIN)
 		{
-			safe_free(commands[i]);
 			free_str(sub_command);
 			continue; /* shell builtin executed well */
 		}
@@ -78,7 +78,6 @@ int parse_and_execute(char **commands, path_t *path_list, char *line)
 			else
 				exit_code = print_cmd_not_found(sub_command, commands, i);
 		}
-		safe_free(commands[i]);
 		free_str(sub_command);
 	}
 

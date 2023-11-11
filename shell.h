@@ -51,6 +51,7 @@ char *_strstr(const char *haystack, const char *needle);
 /* memory handlers */
 
 void free_str(char **str_array);
+void multi_free(const char *format, ...);
 char *new_word(const char *str, int start, int end);
 void *_memcpy(void *dest, const void *src, size_t n);
 void *_realloc(void *old_mem_blk, size_t old_size, size_t new_size);
@@ -97,7 +98,6 @@ int handle_with_path(path_t *path_list, char **sub_command);
 int print_cmd_not_found(char **sub_command, char **commands, size_t index);
 int handle_file_as_input(char *filename, path_t *path_list);
 char **handle_variables(char **commands, int exit_code);
-void _free_on_exit(const char *format, ...);
 
 /* numbers */
 

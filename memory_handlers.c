@@ -113,7 +113,7 @@ char *new_word(const char *str, int start, int end)
  */
 void _free(void **ptr)
 {
-	if (ptr != NULL || *ptr != NULL)
+	if (ptr != NULL && *ptr != NULL)
 	{
 		free(*ptr);
 		*ptr = NULL;

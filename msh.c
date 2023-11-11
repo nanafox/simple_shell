@@ -43,8 +43,7 @@ int main(int argc, char *argv[])
 		exit_code = parse_line(line, path_list);
 		safe_free(line);
 	}
-	safe_free(line);
-	free_list(&path_list);
+	multi_free("sp", line, &path_list);
 
 	return (exit_code);
 }

@@ -20,7 +20,7 @@ int handle_builtin(char **sub_command, char **commands, path_t *path_list,
 	}
 	else if (!_strcmp(sub_command[0], "exit"))
 	{
-		return (handle_exit(sub_command[1], exit_code, _free_on_exit,
+		return (handle_exit(sub_command[1], exit_code, multi_free,
 					sub_command, commands, &path_list, line));
 	}
 

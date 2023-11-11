@@ -18,15 +18,15 @@ void free_list(path_t **head)
 }
 
 /**
- * _free_on_exit - frees dynamically allocated memory when the exit command is
- * issued on the command line
+ * multi_free - frees dynamically allocated memory
  * @format: the format of how dynamically allocated variables are given
  *
  * Description: 's' is for a normal string (char *)
  *				't' is for an array of strings (char **)
- *				'p' is for the path_t list
+ *				'p' is for the path_t list (path_t **)
+ *				'a' is for the alias_t list (alias_t **)
  */
-void _free_on_exit(const char *format, ...)
+void multi_free(const char *format, ...)
 {
 	va_list ap;
 	char *line;
@@ -47,6 +47,11 @@ void _free_on_exit(const char *format, ...)
 			case 'p':
 				free_list(va_arg(ap, path_t **));
 				break;
+			/*
+			 * case 'a':
+			 * free_aliases(va_arg(ap, alias_t **));
+			 * break;
+			 */
 			default:
 				break;
 		}
