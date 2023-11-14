@@ -17,7 +17,8 @@ int _strncmp(const char *s1, const char *s2, size_t n)
 	{
 		if (*s1 == '\0' || i + 1 == n)
 		{
-			return (0); /* both strings are equal or reached the end of comparison */
+			/* both strings are equal or reached the end of comparison */
+			return (0);
 		}
 		s1++;
 		s2++;
@@ -52,6 +53,7 @@ char *_strchr(const char *s, int c)
 			return (tmp_s); /* match found */
 		tmp_s++;
 	}
+
 	/* return a pointer to the null byte if 'c' is a null byte. */
 	if (c == '\0')
 		return (tmp_s);
@@ -78,16 +80,18 @@ char *_strstr(const char *haystack, const char *needle)
 	for (i = 0; haystack[i]; i++)
 	{
 		j = 0;
+
 		/* keep searching so long as characters in both strings are equal */
 		while (haystack[i + j] == needle[j] && needle[j])
 			j++;
 
-		/* end of substring reached - means there was a full match */
+		/* end of substring reached - it means there was a full match */
 		if (needle[j] == '\0')
 		{
 			return ((char *)&haystack[i]);
 		}
 	}
+
 	return (NULL); /* no match found */
 }
 
@@ -125,7 +129,6 @@ char *_strdup(const char *str)
 	return (dup_str);
 }
 
-
 /**
  * _strncpy - copy a string
  * @dest: destination string buffer
@@ -156,5 +159,3 @@ char *_strncpy(char *dest, const char *src, size_t n)
 
 	return (dest);
 }
-
-

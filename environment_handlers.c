@@ -53,7 +53,9 @@ path_t *build_path(path_t **head)
 		new_node->next = NULL;
 
 		if (*head == NULL)
-			*head = new_node;
+		{
+			(*head) = new_node;
+		}
 		else
 		{
 			tail = *head;
@@ -62,6 +64,7 @@ path_t *build_path(path_t **head)
 
 			tail->next = new_node;
 		}
+		/* free memory for the written value */
 		safe_free(pathnames[i]);
 		i++;
 	}
