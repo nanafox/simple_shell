@@ -92,7 +92,7 @@ char *new_word(const char *str, int start, int end)
 	new_word = malloc(sizeof(char) * (word_len + 1));
 	if (new_word == NULL)
 	{
-		return (NULL);
+		return (NULL); /* memory allocation failed */
 	}
 
 	_strncpy(new_word, str + start, word_len);
@@ -127,11 +127,6 @@ void _free(void **ptr)
 void free_str(char **str_array)
 {
 	int i = 0;
-
-	if (str_array == NULL)
-	{
-		return; /* there's nothing more to do here, it's empty */
-	}
 
 	/* free memory allocated for each string */
 	for (i = 0; str_array[i] != NULL; i++)
