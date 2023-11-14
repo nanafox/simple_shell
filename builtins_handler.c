@@ -7,11 +7,12 @@
  * @path_list: a list of pathnames in the PATH variable
  * @line: the command line received
  * @exit_code: the exit code to use
+ * @aliases: a list of aliases
  *
  * Return: exit code
  */
-int handle_builtin(char **sub_command, char **commands, path_t *path_list,
-		char *line, int exit_code)
+int handle_builtin(char **sub_command, char **commands, char *line,
+		alias_t *aliases, path_t *path_list, int exit_code)
 {
 	if (!_strcmp(sub_command[0], "env") || !_strcmp(sub_command[0], "printenv"))
 	{
@@ -21,7 +22,7 @@ int handle_builtin(char **sub_command, char **commands, path_t *path_list,
 	else if (!_strcmp(sub_command[0], "exit"))
 	{
 		return (handle_exit(sub_command[1], exit_code, multi_free,
-					sub_command, commands, &path_list, line));
+					sub_command, commands, line, &path_list, &aliases));
 	}
 
 	/* let's handle the builtin 'cd' command */

@@ -105,20 +105,22 @@ int _unsetenv(const char *name)
  * @commands: an array of command line strings
  * @sub_command: the command to execute
  * @path_list: a list of pathnames in the PATH variable
+ * @aliases: a list of aliases
  * @line: the command line received
  *
  * Return: 2 on error, else exits with @exit_code
  */
 int handle_exit(char *exit_code, int status,
 		void (*cleanup)(const char *format, ...),
-		char **sub_command, char **commands, path_t **path_list, char *line)
+		char **sub_command, char **commands, char *line, path_t **path_list,
+		alias_t **aliases)
 {
 	size_t illegal_num_count = 1;
 	int code;
 
 	if (exit_code == NULL)
 	{
-		cleanup("ttps", sub_command, commands, path_list, line);
+		cleanup("spatt", line, path_list, aliases, sub_command, commands);
 		exit(status);
 	}
 
@@ -131,7 +133,7 @@ int handle_exit(char *exit_code, int status,
 	}
 
 	code = _atoi(exit_code);
-	cleanup("ttps", sub_command, commands, path_list, line);
+	cleanup("spatt", line, path_list, aliases, sub_command, commands);
 	exit(code);
 }
 

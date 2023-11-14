@@ -10,10 +10,31 @@ void free_list(path_t **head)
 
 	while (*head != NULL)
 	{
-		current_node = *head;
-		*head = (*head)->next; /* move to the next node */
-		safe_free(current_node->pathname); /* free memory allocated for the string */
-		safe_free(current_node); /* free memory for the current node */
+		current_node = (*head);
+		(*head) = (*head)->next; /* move to the next node */
+		safe_free(
+			current_node->pathname); /* free memory allocated for the string */
+		safe_free(current_node);	 /* free memory for the current node */
+	}
+}
+
+/**
+ * free_aliases - frees an alias_t list
+ * @head: a pointer to the list containing the aliases
+ */
+void free_aliases(alias_t **head)
+{
+	alias_t *current;
+
+	while (*head != NULL)
+	{
+		current = (*head);
+		(*head) = (*head)->next;
+
+		/* free memory */
+		safe_free(current->name);
+		safe_free(current->value);
+		safe_free(current);
 	}
 }
 
@@ -23,8 +44,8 @@ void free_list(path_t **head)
  *
  * Description: 's' is for a normal string (char *)
  *				't' is for an array of strings (char **)
- *				'p' is for the path_t list (path_t **)
- *				'a' is for the alias_t list (alias_t **)
+ *				'p' is for the path_t list
+ *				'a' is for the alias_t list
  */
 void multi_free(const char *format, ...)
 {
@@ -37,23 +58,21 @@ void multi_free(const char *format, ...)
 	{
 		switch (*format)
 		{
-			case 's':
-				line = va_arg(ap, char *);
-				safe_free(line);
-				break;
-			case 't':
-				free_str(va_arg(ap, char **));
-				break;
-			case 'p':
-				free_list(va_arg(ap, path_t **));
-				break;
-			/*
-			 * case 'a':
-			 * free_aliases(va_arg(ap, alias_t **));
-			 * break;
-			 */
-			default:
-				break;
+		case 's':
+			line = va_arg(ap, char *);
+			safe_free(line);
+			break;
+		case 't':
+			free_str(va_arg(ap, char **));
+			break;
+		case 'p':
+			free_list(va_arg(ap, path_t **));
+			break;
+		case 'a':
+			free_aliases(va_arg(ap, alias_t **));
+			break;
+		default:
+			break;
 		}
 		format++;
 	}
