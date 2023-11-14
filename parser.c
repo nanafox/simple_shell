@@ -1,6 +1,7 @@
 #include "shell.h"
 
 static int exit_code; /* keeps track of all exit codes */
+static alias_t *aliases;
 
 /**
  * parse_line - parses the receive command line, processes it before handing it
@@ -24,94 +25,152 @@ int parse_line(char *line, path_t *path_list)
 
 	/* now let's all the commands provided by the user */
 	commands = _strtok(line, "\n;");
-
 	if (commands == NULL)
 	{
 		perror("_strtok");
 		return (-1); /* an error occurred while getting the commands */
 	}
 
-	return (parse_and_execute(commands, path_list, line));
+	exit_code = parse(commands, path_list, line);
+	free_str(commands);
+	return (exit_code);
+}
+
+/**
+ * parse - parses an array of commands received from the prompt
+ * @commands: an array of command line strings
+ * @path_list: a list of pathnames in the PATH variable
+ * @line: the command line received
+ *
+ * Return: the exit code of the executed program
+ */
+int parse(char **commands, path_t *path_list, char *line)
+{
+	ssize_t i, offset;
+	char **sub_command = NULL, *cmd = NULL, *operator = NULL;
+	char *next_cmd = NULL, *temp_next_cmd = NULL;
+
+	for (i = 0; commands[i] != NULL; i++)
+	{
+		operator = get_operator(commands[i]);
+		if (operator != NULL)
+		{
+			offset = strcspn(commands[i], operator);
+			/* extract the command before the operator */
+			cmd = strndup(commands[i], offset);
+			if (cmd == NULL)
+				return (0);
+			sub_command = _strtok(cmd, NULL);
+			safe_free(cmd);
+			if (sub_command == NULL)
+				return (0);
+			sub_command = handle_variables(sub_command, exit_code);
+			parse_helper(commands, sub_command, path_list, line, i);
+
+			temp_next_cmd = _strdup(&commands[i][offset + 2]);
+			safe_free(next_cmd);
+			safe_free(commands[i]);
+
+			/* check the exit code and react accordingly */
+			if ((!_strcmp(operator, "&&") && exit_code == 0) ||
+				(!_strcmp(operator, "||") && exit_code != 0))
+			{
+				commands[i] = temp_next_cmd;
+				parse(commands, path_list, line);
+				next_cmd = temp_next_cmd;
+			}
+			else
+				safe_free(temp_next_cmd);
+		}
+		else
+			parse_and_execute(commands, commands[i], path_list, line, i);
+	}
+	return (exit_code);
 }
 
 /**
  * parse_and_execute - parses each sub command line and executes it
  * @commands: an array of command line strings
  * @path_list: a list of pathnames in the PATH variable
+ * @cur_cmd: the current command in the commands array
  * @line: the command line received
+ * @index: the current index in commands array
  *
- * Return: the exit code of the executed program, else -1 if something goes
- * wrong
+ * Return: the exit code of the executed program
  */
-int parse_and_execute(char **commands, path_t *path_list, char *line)
+int parse_and_execute(char **commands, char *cur_cmd, path_t *path_list,
+					  char *line, size_t index)
 {
-	size_t i;
 	char **sub_command = NULL;
 
-	for (i = 0; commands[i] != NULL; i++)
+	/* get the sub commands and work on them */
+	sub_command = _strtok(cur_cmd, NULL);
+	if (sub_command == NULL)
 	{
-		/* get the sub commands and work on them */
-		sub_command = _strtok(commands[i], NULL);
-		if (sub_command == NULL)
-		{
-			free_str(commands);
-			return (0); /* probably just lots of tabs or spaces, maybe both */
-		}
-		sub_command = handle_variables(sub_command, exit_code);
-		exit_code = handle_builtin(sub_command, commands, path_list,
-				line, exit_code);
-		if (exit_code != NOT_BUILTIN)
-		{
-			free_str(sub_command);
-			continue; /* shell builtin executed well */
-		}
-		if (path_list != NULL) /* handle the command with the PATH variable */
-		{
-			exit_code = handle_with_path(path_list, sub_command);
-			if (exit_code == -1)
-				exit_code = print_cmd_not_found(sub_command, commands, i);
-		}
-		else
-		{
-			if (access(sub_command[0], X_OK) == 0 && _strchr(sub_command[0], '/'))
-				exit_code = execute_command(sub_command[0], sub_command);
-			else
-				exit_code = print_cmd_not_found(sub_command, commands, i);
-		}
-		free_str(sub_command);
+		return (0); /* probably just lots of tabs or spaces, maybe both */
 	}
 
-	free_str(commands);
+	/* check for variables */
+	sub_command = handle_variables(sub_command, exit_code);
+	parse_helper(commands, sub_command, path_list, line, index);
+
+	/* cleanup and leave */
+	safe_free(commands[index]);
 	return (exit_code);
 }
 
 /**
- * handle_with_path - handles commands when the PATH is set
- * @path_list: a list of pathnames in the PATH variable
- * @sub_command: the command to execute
- *
- * Return: the exit code of the child process, else -1 if the command is not in
- * the PATH provided
+ * parse_helper - performs extra parsing on behalf of the parse and execute
+ * function
+ * @commands: an array of commands received on the command line
+ * @sub_command: an array of sub commands generated from the commands array
+ * @path_list: a list of PATH directories
+ * @line: the actual line the user typed on the prompt
+ * @index: the current index in commands array
  */
-int handle_with_path(path_t *path_list, char **sub_command)
+void parse_helper(char **commands, char **sub_command, path_t *path_list,
+				  char *line, size_t index)
 {
-	char path[BUFF_SIZE];
+	char *alias_value;
 
-	while (path_list != NULL)
+	if (!_strcmp(sub_command[0], "alias") ||
+		!_strcmp(sub_command[0], "unalias"))
 	{
-		sprintf(path, "%s%s%s", path_list->pathname, "/", sub_command[0]);
-		if (access(path, X_OK) == 0)
-		{
-			return (execute_command(path, sub_command));
-		}
-		else if (access(sub_command[0], X_OK) == 0)
-		{
-			return (execute_command(sub_command[0], sub_command));
-		}
-		path_list = path_list->next;
+		exit_code = handle_alias(&aliases, sub_command);
+		free_str(sub_command);
+		return;
 	}
 
-	return (-1);
+	alias_value = get_alias(aliases, sub_command[0]);
+	if (alias_value != NULL)
+	{
+		safe_free(sub_command[0]);
+		sub_command[0] = _strdup(alias_value);
+		safe_free(alias_value);
+	}
+	exit_code = handle_builtin(sub_command, commands, line, aliases, path_list,
+							   exit_code);
+	if (exit_code != NOT_BUILTIN)
+	{
+		free_str(sub_command);
+		return; /* shell builtin executed well */
+	}
+
+	if (path_list != NULL) /* handle the command with the PATH variable */
+	{
+		exit_code = handle_with_path(path_list, sub_command);
+		if (exit_code == -1)
+			exit_code = print_cmd_not_found(sub_command, commands, index);
+		free_str(sub_command);
+	}
+	else
+	{
+		if (access(sub_command[0], X_OK) == 0 && _strchr(sub_command[0], '/'))
+			exit_code = execute_command(sub_command[0], sub_command);
+		else
+			exit_code = print_cmd_not_found(sub_command, commands, index);
+		free_str(sub_command);
+	}
 }
 
 /**
@@ -126,8 +185,8 @@ int print_cmd_not_found(char **sub_command, char **commands, size_t index)
 {
 	static size_t err_count = 1;
 
-	dprintf(STDERR_FILENO, "%s: %lu: %s: not found\n",
-		   _getenv("_"), err_count, sub_command[0]);
+	dprintf(STDERR_FILENO, "%s: %lu: %s: not found\n", _getenv("_"), err_count,
+			sub_command[0]);
 	err_count++;
 
 	if (commands[index + 1] == NULL)
@@ -136,41 +195,4 @@ int print_cmd_not_found(char **sub_command, char **commands, size_t index)
 	}
 
 	return (0);
-}
-
-/**
- * handle_file_as_input - handles execution when a file is given as input on
- * the command line (non-interactive mode)
- * @filename: the name of file containing the commands
- * @path_list: a list of pathnames in the PATH variable
- *
- * Return: 0, or the exit status of the just exited process
- */
-int handle_file_as_input(char *filename, path_t *path_list)
-{
-	char *line = NULL;
-	size_t n = 0;
-	int n_read, fd;
-
-	fd = open(filename, O_RDONLY);
-	if (fd == -1)
-	{
-		dprintf(2, "%s: 0: Can't open %s\n", _getenv("_"), filename);
-		return (CMD_NOT_FOUND);
-	}
-
-	n_read = _getline(&line, &n, fd);
-	close(fd);
-
-	if (n_read == -1)
-	{
-		return (-1); /* reading file failed */
-	}
-
-	if (n_read)
-		exit_code = parse_line(line, path_list);
-
-	safe_free(line);
-
-	return (exit_code);
 }
