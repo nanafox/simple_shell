@@ -19,7 +19,6 @@ int main(int argc, char *argv[])
 	if (argc >= 2)
 	{
 		exit_code = handle_file_as_input(argv[1], path_list);
-		free_list(&path_list);
 		return (exit_code);
 	}
 	while (RUNNING)
@@ -64,13 +63,14 @@ void show_prompt(void)
 		{
 			/* get the right directory name to show on the prompt */
 			pwd = (*pwd == '/' && *(pwd + 1) == '\0')
-				? pwd
-				: (_strrchr(pwd, '/') + 1); /* show only the current directory */
+					  ? pwd
+					  : (_strrchr(pwd, '/') +
+						 1); /* show only the current directory */
 
 			sprintf(prompt, "[%s@msh %s]%% ", username,
 					(!_strcmp(pwd, username))
-					? "~" /* show '~' for the user's $HOME directory */
-					: pwd);
+						? "~" /* show '~' for the user's $HOME directory */
+						: pwd);
 		}
 	}
 	else
