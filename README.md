@@ -30,6 +30,8 @@ MSH is a minimalistic shell implementation that provides a basic command-line in
     - [PATH](#path)
     - [Commands with and without Arguments](#commands-with-and-without-arguments)
       - [Examples:](#examples)
+  - [Releases](#releases)
+  - [Download and Usage](#download-and-usage)
   - [Author](#author)
 
 ---
@@ -191,6 +193,17 @@ MSH supports commands with and without arguments, providing flexibility in comma
 ls
 ls -l
 ```
+
+---
+
+## Releases
+
+- [Latest Release](https://github.com/nanafox/simple_shell/releases/latest)
+- [All Releases](https://github.com/nanafox/simple_shell/releases)
+
+## Download and Usage
+
+To download the latest release of MSH, click [here](https://github.com/nanafox/simple_shell/releases/latest).
 
 ---
 
