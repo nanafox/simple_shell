@@ -44,7 +44,6 @@ void _reverse(char *buffer, size_t len)
 	}
 }
 
-
 /**
  * _atoi - converts a string to an integer
  * @s: string
@@ -62,12 +61,15 @@ int _atoi(const char *s)
 	{
 		if (s[i] == '\0') /* empty string or no digits */
 			break;
+
 		else if (isspace(s[i]) || isalpha(s[i]))
 			continue; /* skip characters and whitespaces */
+
 		else if (issign(s[i]))
 			sign *= isnegative(s[i]); /* update sign */
 	}
 
+	/* now let's work on converting the string to a number */
 	while (isdigit(s[i]))
 	{
 		num = 10 * num + (s[i] - '0');
