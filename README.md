@@ -205,6 +205,8 @@ ls -l
 
 To download the latest release of MSH, click [here](https://github.com/nanafox/simple_shell/releases/latest).
 
+For information on how to install and execute, please visit the [wiki](https://github.com/nanafox/simple_shell/wiki)
+
 ---
 
 ## Author
