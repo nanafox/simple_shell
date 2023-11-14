@@ -2,15 +2,15 @@
 #define SHELL_H
 
 #include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 /* macros */
 
@@ -51,7 +51,6 @@ char *_strstr(const char *haystack, const char *needle);
 /* memory handlers */
 
 void free_str(char **str_array);
-void multi_free(const char *format, ...);
 char *new_word(const char *str, int start, int end);
 void *_memcpy(void *dest, const void *src, size_t n);
 void *_realloc(void *old_mem_blk, size_t old_size, size_t new_size);
@@ -59,6 +58,9 @@ void *_realloc(void *old_mem_blk, size_t old_size, size_t new_size);
 /* a safer way to deallocate dynamic memory */
 void _free(void **ptr);
 #define safe_free(p) _free((void **)&(p)) /* _free's frontend */
+
+/* frees memory for a variable number of objects */
+void multi_free(const char *format, ...);
 
 /* a custom implementation of the getline function */
 ssize_t _getline(char **lineptr, size_t *n, int fd);
@@ -88,32 +90,62 @@ char *_getenv(const char *name);
 path_t *build_path(path_t **head);
 void print_path(path_t *list);
 
-/* parsers and executors */
-
-char *handle_comments(char *command);
-int parse_line(char *line, path_t *path_list);
-int execute_command(char *pathname, char *argv[]);
-int parse_and_execute(char **commands, path_t *path_list, char *line);
-int handle_with_path(path_t *path_list, char **sub_command);
-int print_cmd_not_found(char **sub_command, char **commands, size_t index);
-int handle_file_as_input(char *filename, path_t *path_list);
-char **handle_variables(char **commands, int exit_code);
-
 /* numbers */
 
 void _reverse(char *buffer, size_t len);
 void _itoa(size_t n, char *s);
 int _atoi(const char *s);
 
+/* aliases */
+
+/**
+ * struct alias - the blueprint for the built-in alias command
+ * @name: the name of the alias
+ * @value: the value assigned to the name
+ * @next: a pointer to the next alias_t node
+ */
+typedef struct alias
+{
+	char *name;
+	char *value;
+	struct alias *next;
+} alias_t;
+
+void free_aliases(alias_t **head);
+char *extract_value(const char *value);
+void print_aliases(const alias_t *head);
+int unalias(alias_t **head, char **command_line);
+char *get_alias(alias_t *head, const char *name);
+int handle_alias(alias_t **head, char **command_line);
+int print_alias(const alias_t *head, const char *name);
+alias_t *add_alias(alias_t **head, const char *name, const char *value);
+
 /* builtin handlers */
 
 int handle_cd(const char *pathname);
 int _setenv(const char *name, const char *value, int overwrite);
 int _unsetenv(const char *name);
-int handle_builtin(char **sub_command, char **commands, path_t *path_list,
-		char *line, int exit_code);
+int handle_builtin(char **sub_command, char **commands, char *line,
+				   alias_t *aliases, path_t *path_list, int exit_code);
 int handle_exit(char *exit_code, int status,
-		void (*cleanup)(const char *format, ...),
-		char **sub_command, char **commands, path_t **path_list, char *line);
+				void (*cleanup)(const char *format, ...), char **sub_command,
+				char **commands, char *line, path_t **path_list,
+				alias_t **aliases);
+
+/* parsers and executors */
+
+char *get_operator(char *str);
+char *handle_comments(char *command);
+int parse_line(char *line, path_t *path_list);
+int execute_command(char *pathname, char *argv[]);
+int parse_and_execute(char **commands, char *cur_cmd, path_t *path_list,
+					  char *line, size_t index);
+int handle_with_path(path_t *path_list, char **sub_command);
+int print_cmd_not_found(char **sub_command, char **commands, size_t index);
+int handle_file_as_input(char *filename, path_t *path_list);
+char **handle_variables(char **commands, int exit_code);
+int parse(char **commands, path_t *path_list, char *line);
+void parse_helper(char **commands, char **sub_command, path_t *path_list,
+				  char *line, size_t index);
 
 #endif /* SHELL_H */

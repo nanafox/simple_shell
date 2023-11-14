@@ -18,7 +18,8 @@ char **handle_variables(char **command, int exit_code)
 	{
 		loc = _strchr(command[i], '$');
 		if (loc == NULL)
-			continue; /* no variables found yet? keep, searching till the end */
+			/* no variables found yet? keep, searching till the end */
+			continue;
 
 		offset = (&loc[0]) - (&command[i][0]);
 

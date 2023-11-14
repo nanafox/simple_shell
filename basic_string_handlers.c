@@ -96,3 +96,36 @@ size_t _strlen(const char *s)
 
 	return (i);
 }
+
+/**
+ * get_operator - returns the && or || logical operator in a string if found
+ * @str: the string to search
+ *
+ * Return: the logical operator if found, else NULL
+ */
+char *get_operator(char *str)
+{
+	char *operator = NULL;
+	int i;
+
+	if (str == NULL)
+		return (NULL);
+
+	/* Check for the "&&" operator */
+	for (i = 0; str[i] != '\0'; i++)
+	{
+		if (str[i] == '&' && str[i + 1] == '&')
+		{
+			operator = "&&";
+			break;
+		}
+		/* Check for the "||" operator */
+		else if (str[i] == '|' && str[i + 1] == '|')
+		{
+			operator = "||";
+			break;
+		}
+	}
+
+	return (operator);
+}
