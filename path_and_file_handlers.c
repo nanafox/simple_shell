@@ -46,7 +46,7 @@ int handle_file_as_input(char *filename, path_t *path_list)
 	fd = open(filename, O_RDONLY);
 	if (fd == -1)
 	{
-		dprintf(2, "%s: 0: Can't open %s\n", _getenv("_"), filename);
+		dprintf(2, "%s: 0: Can't open %s\n", _getenv("msh"), filename);
 		return (CMD_NOT_FOUND);
 	}
 
