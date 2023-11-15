@@ -133,6 +133,7 @@ int handle_exit(char *exit_code, int status,
 	}
 
 	code = _atoi(exit_code);
+	safe_free(exit_code);
 	cleanup("spatt", line, path_list, aliases, sub_command, commands);
 	exit(code);
 }
@@ -145,9 +146,8 @@ int handle_exit(char *exit_code, int status,
  */
 int handle_cd(const char *pathname)
 {
-	char *home = _getenv("HOME");
-	char *oldpath = _getenv("OLDPWD");
-	char pwd[BUFF_SIZE], *prog = _getenv("msh");
+	char *home = _getenv("HOME"), *oldpath = _getenv("OLDPWD");
+	char path[PATH_SIZE], pwd[BUFF_SIZE], *prog = _getenv("msh");
 	static size_t cd_err_count = 1;
 
 	getcwd(pwd, BUFF_SIZE);
@@ -155,7 +155,6 @@ int handle_cd(const char *pathname)
 	if (pathname != NULL)
 	{
 		int dash = !_strcmp(pathname, "-") || !_strcmp(pathname, "--");
-		char path[PATH_SIZE];
 
 		/* build the full path when relative paths are given */
 		if (!_strchr(pathname, '/') && !dash)
@@ -179,6 +178,8 @@ int handle_cd(const char *pathname)
 	}
 	else
 	{
+		if (home == NULL)
+			return (0); /* HOME is not set */
 		if (chdir(home) == -1)
 			return (CMD_ERR);
 		setenv("OLDPWD", pwd, 1);
