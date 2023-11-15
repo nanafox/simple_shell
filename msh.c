@@ -15,6 +15,7 @@ int main(int argc, char *argv[])
 	int exit_code = 0;
 	path_t *path_list = NULL;
 
+	setenv("msh", argv[0], 1); /* keep track of the program's name */
 	path_list = build_path(&path_list);
 	if (argc >= 2)
 	{
@@ -44,7 +45,6 @@ int main(int argc, char *argv[])
 		exit_code = parse_line(line, path_list);
 		safe_free(line);
 	}
-	multi_free("sp", line, &path_list);
 
 	return (exit_code);
 }

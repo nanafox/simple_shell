@@ -186,7 +186,7 @@ int print_cmd_not_found(char **sub_command, char **commands, size_t index)
 {
 	static size_t err_count = 1;
 
-	dprintf(STDERR_FILENO, "%s: %lu: %s: not found\n", _getenv("_"), err_count,
+	dprintf(STDERR_FILENO, "%s: %lu: %s: not found\n", _getenv("msh"), err_count,
 			sub_command[0]);
 	err_count++;
 
