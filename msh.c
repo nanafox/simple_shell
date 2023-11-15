@@ -1,5 +1,6 @@
 #include "shell.h"
 
+
 /**
  * main - the entry point for the shell
  * @argc: command line arguments counter
@@ -15,11 +16,10 @@ int main(int argc, char *argv[])
 	int exit_code = 0;
 	path_t *path_list = NULL;
 
-	setenv("msh", argv[0], 1); /* keep track of the program's name */
 	path_list = build_path(&path_list);
 	if (argc >= 2)
 	{
-		exit_code = handle_file_as_input(argv[1], path_list);
+		exit_code = handle_file_as_input(argv, path_list);
 		return (exit_code);
 	}
 	while (RUNNING)
@@ -40,9 +40,9 @@ int main(int argc, char *argv[])
 			line = _strdup("exit");
 			if (isatty(STDIN_FILENO))
 				printf("exit\n");
-			return (parse_line(line, path_list));
+			return (parse_line(line, path_list, argv[0]));
 		}
-		exit_code = parse_line(line, path_list);
+		exit_code = parse_line(line, path_list, argv[0]);
 		safe_free(line);
 	}
 

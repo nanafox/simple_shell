@@ -106,14 +106,14 @@ int _unsetenv(const char *name)
  * @sub_command: the command to execute
  * @path_list: a list of pathnames in the PATH variable
  * @aliases: a list of aliases
+ * @prog_name: the name of the program
  * @line: the command line received
  *
  * Return: 2 on error, else exits with @exit_code
  */
-int handle_exit(char *exit_code, int status,
-		void (*cleanup)(const char *format, ...),
-		char **sub_command, char **commands, char *line, path_t **path_list,
-		alias_t **aliases)
+int handle_exit(char *exit_code, const char *prog_name, int status,
+		void (*cleanup)(const char *format, ...), char **sub_command,
+		char **commands, char *line, path_t **path_list, alias_t **aliases)
 {
 	size_t illegal_num_count = 1;
 	int code;
@@ -127,7 +127,7 @@ int handle_exit(char *exit_code, int status,
 	if (isalpha(*exit_code) || _atoi(exit_code) < 0 || *exit_code == '-')
 	{
 		dprintf(STDERR_FILENO, "%s: %lu: exit: Illegal number: %s\n",
-				_getenv("msh"), illegal_num_count, exit_code);
+				prog_name, illegal_num_count, exit_code);
 		illegal_num_count++;
 		return (CMD_ERR);
 	}
@@ -140,13 +140,14 @@ int handle_exit(char *exit_code, int status,
 /**
  * handle_cd - handles the builtin `cd` command
  * @pathname: the string containing the path to change directory to
+ * @prog_name: the name of the program
  *
  * Return: 0 on success, else 2 on error
  */
-int handle_cd(const char *pathname)
+int handle_cd(const char *pathname, const char *prog_name)
 {
 	char *home = _getenv("HOME"), *oldpath = _getenv("OLDPWD");
-	char path[PATH_SIZE], pwd[BUFF_SIZE], *prog = _getenv("msh");
+	char path[PATH_SIZE], pwd[BUFF_SIZE];
 	static size_t cd_err_count = 1;
 
 	getcwd(pwd, BUFF_SIZE);
@@ -155,7 +156,6 @@ int handle_cd(const char *pathname)
 	{
 		int dash = !_strcmp(pathname, "-") || !_strcmp(pathname, "--");
 
-		/* build the full path when relative paths are given */
 		if (!_strchr(pathname, '/') && !dash)
 			sprintf(path, "%s/%s", pwd, ((dash) ? oldpath : pathname));
 		else
@@ -163,9 +163,10 @@ int handle_cd(const char *pathname)
 		if (chdir(path) == -1)
 		{
 			if (strspn(pathname, "-") > 2)
-				dprintf(2, "%s: %lu: cd: Illegal option: --\n", prog, cd_err_count);
+				dprintf(2, "%s: %lu: cd: Illegal option: --\n", prog_name, cd_err_count);
 			else
-				dprintf(2, "%s: %lu: cd: can't cd to %s\n", prog, cd_err_count, pathname);
+				dprintf(2, "%s: %lu: cd: can't cd to %s\n", prog_name,
+						cd_err_count, pathname);
 			cd_err_count++;
 			return (CMD_ERR);
 		}

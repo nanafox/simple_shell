@@ -131,11 +131,11 @@ void process_non_matching(alias_t *aliases, const char *non_matching, int end);
 /* builtin handlers */
 
 int _unsetenv(const char *name);
-int handle_cd(const char *pathname);
+int handle_cd(const char *pathname, const char *prog_name);
 int _setenv(const char *name, const char *value, int overwrite);
 int handle_builtin(char **sub_command, char **commands, char *line,
-				   alias_t *aliases, path_t *path_list, int exit_code);
-int handle_exit(char *exit_code, int status,
+		const char *prog_name, alias_t *aliases, path_t *path_list, int exit_code);
+int handle_exit(char *exit_code, const char *prog_name, int status,
 				void (*cleanup)(const char *format, ...), char **sub_command,
 				char **commands, char *line, path_t **path_list,
 				alias_t **aliases);
@@ -144,16 +144,18 @@ int handle_exit(char *exit_code, int status,
 
 char *get_operator(char *str);
 char *handle_comments(char *command);
-int parse_line(char *line, path_t *path_list);
+int parse_line(char *line, path_t *path_list, const char *prog_name);
 int execute_command(char *pathname, char *argv[]);
 int parse_and_execute(char **commands, char *cur_cmd, path_t *path_list,
-					  char *line, size_t index);
+					  char *line, const char *prog_name, size_t index);
 int handle_with_path(path_t *path_list, char **sub_command);
-int print_cmd_not_found(char **sub_command, char **commands, size_t index);
-int handle_file_as_input(char *filename, path_t *path_list);
+int print_cmd_not_found(const char *prog_name, char **sub_command,
+		char **commands, size_t index);
+int handle_file_as_input(char **argv, path_t *path_list);
 char **handle_variables(char **commands, int exit_code);
-int parse(char **commands, path_t *path_list, char *line);
+int parse(char **commands, path_t *path_list, char *line,
+		const char *prog_name);
 void parse_helper(char **commands, char **sub_command, path_t *path_list,
-				  char *line, size_t index);
+				  char *line, const char *prog_name, size_t index);
 
 #endif /* SHELL_H */

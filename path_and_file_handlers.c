@@ -32,23 +32,23 @@ int handle_with_path(path_t *path_list, char **sub_command)
 /**
  * handle_file_as_input - handles execution when a file is given as input on
  * the command line (non-interactive mode)
- * @filename: the name of file containing the commands
+ * @argv: array containing the file and program name
  * @path_list: a list of pathnames in the PATH variable
  *
  * Return: 0, or the exit status of the just exited process
  */
-int handle_file_as_input(char *filename, path_t *path_list)
+int handle_file_as_input(char **argv, path_t *path_list)
 {
 	char *line = NULL;
 	size_t n = 0;
 	int n_read, fd, exit_code = 0;
 
-	fd = open(filename, O_RDONLY);
+	fd = open(argv[1], O_RDONLY);
 	if (fd == -1)
 	{
 		/* we couldn't open the file, let's clean and leave */
 		free_list(&path_list);
-		dprintf(2, "%s: 0: Can't open %s\n", _getenv("msh"), filename);
+		dprintf(2, "%s: 0: Can't open %s\n", argv[0], argv[1]);
 		return (CMD_NOT_FOUND);
 	}
 
@@ -62,7 +62,7 @@ int handle_file_as_input(char *filename, path_t *path_list)
 	}
 
 	if (n_read)
-		exit_code = parse_line(line, path_list);
+		exit_code = parse_line(line, path_list, argv[0]);
 
 	multi_free("sp", line, &path_list);
 

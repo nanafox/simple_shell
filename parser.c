@@ -8,14 +8,14 @@ static alias_t *aliases;
  * over to the executor only after it has confirmed the command is valid
  * @line: the command line received
  * @path_list: a list of pathnames in the PATH variable
+ * @prog_name: the name of the running program
  *
  * Return: the exit code of the executed program, else -1 if something goes
  * wrong
  */
-int parse_line(char *line, path_t *path_list)
+int parse_line(char *line, path_t *path_list, const char *prog_name)
 {
 	char **commands = NULL;
-
 	/* skip normal ENTER keys and leading comments */
 	if (*line == '\n' || *line == '#')
 		return (0);
@@ -31,7 +31,7 @@ int parse_line(char *line, path_t *path_list)
 		return (-1); /* an error occurred while getting the commands */
 	}
 
-	exit_code = parse(commands, path_list, line);
+	exit_code = parse(commands, path_list, line, prog_name);
 	free_str(commands);
 
 	return (exit_code);
@@ -42,10 +42,12 @@ int parse_line(char *line, path_t *path_list)
  * @commands: an array of command line strings
  * @path_list: a list of pathnames in the PATH variable
  * @line: the command line received
+ * @prog_name: the name of the running program
  *
  * Return: the exit code of the executed program
  */
-int parse(char **commands, path_t *path_list, char *line)
+int parse(char **commands, path_t *path_list, char *line,
+		const char *prog_name)
 {
 	ssize_t i, offset;
 	char **sub_command = NULL, *cmd = NULL, *operator = NULL;
@@ -66,7 +68,7 @@ int parse(char **commands, path_t *path_list, char *line)
 			if (sub_command == NULL)
 				return (0);
 			sub_command = handle_variables(sub_command, exit_code);
-			parse_helper(commands, sub_command, path_list, line, i);
+			parse_helper(commands, sub_command, path_list, line, prog_name, i);
 
 			temp_next_cmd = _strdup(&commands[i][offset + 2]);
 			safe_free(next_cmd);
@@ -77,14 +79,14 @@ int parse(char **commands, path_t *path_list, char *line)
 				(!_strcmp(operator, "||") && exit_code != 0))
 			{
 				commands[i] = temp_next_cmd;
-				parse(commands, path_list, line);
+				parse(commands, path_list, line, prog_name);
 				next_cmd = temp_next_cmd;
 			}
 			else
 				safe_free(temp_next_cmd);
 		}
 		else
-			parse_and_execute(commands, commands[i], path_list, line, i);
+			parse_and_execute(commands, commands[i], path_list, line, prog_name, i);
 	}
 	return (exit_code);
 }
@@ -96,11 +98,12 @@ int parse(char **commands, path_t *path_list, char *line)
  * @cur_cmd: the current command in the commands array
  * @line: the command line received
  * @index: the current index in commands array
+ * @prog_name: the name of the running program
  *
  * Return: the exit code of the executed program
  */
 int parse_and_execute(char **commands, char *cur_cmd, path_t *path_list,
-					  char *line, size_t index)
+					  char *line, const char *prog_name, size_t index)
 {
 	char **sub_command = NULL;
 
@@ -113,7 +116,7 @@ int parse_and_execute(char **commands, char *cur_cmd, path_t *path_list,
 
 	/* check for variables */
 	sub_command = handle_variables(sub_command, exit_code);
-	parse_helper(commands, sub_command, path_list, line, index);
+	parse_helper(commands, sub_command, path_list, line, prog_name, index);
 
 	/* cleanup and leave */
 	safe_free(commands[index]);
@@ -127,10 +130,11 @@ int parse_and_execute(char **commands, char *cur_cmd, path_t *path_list,
  * @sub_command: an array of sub commands generated from the commands array
  * @path_list: a list of PATH directories
  * @line: the actual line the user typed on the prompt
+ * @prog_name: the name of the running program
  * @index: the current index in commands array
  */
 void parse_helper(char **commands, char **sub_command, path_t *path_list,
-				  char *line, size_t index)
+				  char *line, const char *prog_name, size_t index)
 {
 	char *alias_value;
 
@@ -149,8 +153,8 @@ void parse_helper(char **commands, char **sub_command, path_t *path_list,
 		safe_free(alias_value);
 	}
 
-	exit_code = handle_builtin(sub_command, commands, line, aliases, path_list,
-							   exit_code);
+	exit_code = handle_builtin(sub_command, commands, line, prog_name,
+								aliases, path_list, exit_code);
 	if (exit_code != NOT_BUILTIN)
 	{
 		free_str(sub_command);
@@ -161,32 +165,34 @@ void parse_helper(char **commands, char **sub_command, path_t *path_list,
 	{
 		exit_code = handle_with_path(path_list, sub_command);
 		if (exit_code == -1)
-			exit_code = print_cmd_not_found(sub_command, commands, index);
+			exit_code = print_cmd_not_found(prog_name, sub_command, commands, index);
 		free_str(sub_command);
 	}
 	else
 	{
-		if (access(sub_command[0], X_OK) == 0)
+		if (access(sub_command[0], X_OK) == 0 && _strchr(sub_command[0], '/'))
 			exit_code = execute_command(sub_command[0], sub_command);
 		else
-			exit_code = print_cmd_not_found(sub_command, commands, index);
+			exit_code = print_cmd_not_found(prog_name, sub_command, commands, index);
 		free_str(sub_command);
 	}
 }
 
 /**
  * print_cmd_not_found - prints the command not found error
+ * @prog_name: the name of the running program
  * @sub_command: the actual command executed
  * @commands: a list of commands received on the command line
  * @index: current index in the commands list
  *
  * Return: 127 command not found code, else 0
  */
-int print_cmd_not_found(char **sub_command, char **commands, size_t index)
+int print_cmd_not_found(const char *prog_name, char **sub_command,
+		char **commands, size_t index)
 {
 	static size_t err_count = 1;
 
-	dprintf(STDERR_FILENO, "%s: %lu: %s: not found\n", _getenv("msh"), err_count,
+	dprintf(STDERR_FILENO, "%s: %lu: %s: not found\n", prog_name, err_count,
 			sub_command[0]);
 	err_count++;
 
