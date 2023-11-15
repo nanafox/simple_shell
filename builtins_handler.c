@@ -12,17 +12,18 @@
  * Return: exit code
  */
 int handle_builtin(char **sub_command, char **commands, char *line,
-		alias_t *aliases, path_t *path_list, int exit_code)
+				   alias_t *aliases, path_t *path_list, int exit_code)
 {
-	if (!_strcmp(sub_command[0], "env") || !_strcmp(sub_command[0], "printenv"))
+	if (!_strcmp(sub_command[0], "env") ||
+		!_strcmp(sub_command[0], "printenv"))
 	{
 		_printenv();
 		return (0);
 	}
 	else if (!_strcmp(sub_command[0], "exit"))
 	{
-		return (handle_exit(sub_command[1], exit_code, multi_free,
-					sub_command, commands, line, &path_list, &aliases));
+		return (handle_exit(sub_command[1], exit_code, multi_free, sub_command,
+							commands, line, &path_list, &aliases));
 	}
 
 	/* let's handle the builtin 'cd' command */
@@ -33,7 +34,7 @@ int handle_builtin(char **sub_command, char **commands, char *line,
 	{
 		if (sub_command[1] && sub_command[2])
 			return (setenv(sub_command[1], sub_command[2], 1));
-		return (1); /* inavlid number of parameters received */
+		return (1); /* invalid number of parameters received */
 	}
 	else if (!_strcmp(sub_command[0], "unsetenv"))
 		return (_unsetenv(sub_command[1]));

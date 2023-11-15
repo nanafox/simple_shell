@@ -3,6 +3,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <regex.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,14 +15,16 @@
 
 /* macros */
 
-#define BUFF_SIZE 1024
-#define SPACE ' '
-#define CMD_NOT_FOUND 127
-#define PROMPT_SIZE 4096
-#define PATH_SIZE 2048
-#define NOT_BUILTIN 18
-#define RUNNING 1
-#define CMD_ERR 2
+#define BUFF_SIZE			1024
+#define SPACE				' '
+#define CMD_NOT_FOUND		127
+#define PROMPT_SIZE			4096
+#define PATH_SIZE			2048
+#define NOT_BUILTIN			18
+#define RUNNING				1
+#define CMD_ERR				2
+#define MAX_ALIAS_LENGTH	50
+#define MAX_VALUE_LENGTH	2048
 
 /* function macros */
 
@@ -30,6 +33,7 @@
 #define isalpha(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
 #define isnegative(c) (((c) == '-') ? -1 : 1)
 #define issign(c) ((c) == '-' || (c) == '+')
+#define isquote(c) ((c) == '"' || (c) == '\'')
 
 /* string handlers */
 
@@ -40,6 +44,8 @@ char *_strrchr(const char *s, int c);
 char *_strcpy(char *dest, const char *src);
 char *_strcat(char *dest, const char *src);
 int _strcmp(const char *s1, const char *s2);
+char **duplicate_str_array(char **original);
+void concatenate_arrays(char ***dest, char **src);
 char *_strpbrk(const char *s, const char *accept);
 size_t _strspn(const char *s, const char *accept);
 char **_strtok(const char *str, const char *delim);
@@ -85,16 +91,16 @@ typedef struct _path
 } path_t;
 
 void _printenv(void);
+void print_path(path_t *list);
 void free_list(path_t **head);
 char *_getenv(const char *name);
 path_t *build_path(path_t **head);
-void print_path(path_t *list);
 
 /* numbers */
 
-void _reverse(char *buffer, size_t len);
-void _itoa(size_t n, char *s);
 int _atoi(const char *s);
+void _itoa(size_t n, char *s);
+void _reverse(char *buffer, size_t len);
 
 /* aliases */
 
@@ -112,19 +118,21 @@ typedef struct alias
 } alias_t;
 
 void free_aliases(alias_t **head);
-char *extract_value(const char *value);
 void print_aliases(const alias_t *head);
-int unalias(alias_t **head, char **command_line);
+int unalias(alias_t **head, char *command);
 char *get_alias(alias_t *head, const char *name);
-int handle_alias(alias_t **head, char **command_line);
+int handle_alias(alias_t **head, char *command_line);
 int print_alias(const alias_t *head, const char *name);
+void parse_aliases(const char *input, alias_t **aliases);
+void build_alias_cmd(char ***sub_command, char *alias_value);
 alias_t *add_alias(alias_t **head, const char *name, const char *value);
+void process_non_matching(alias_t *aliases, const char *non_matching, int end);
 
 /* builtin handlers */
 
+int _unsetenv(const char *name);
 int handle_cd(const char *pathname);
 int _setenv(const char *name, const char *value, int overwrite);
-int _unsetenv(const char *name);
 int handle_builtin(char **sub_command, char **commands, char *line,
 				   alias_t *aliases, path_t *path_list, int exit_code);
 int handle_exit(char *exit_code, int status,

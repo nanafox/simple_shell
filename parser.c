@@ -23,7 +23,7 @@ int parse_line(char *line, path_t *path_list)
 	/* first of all, let's get rid of all comments */
 	line = handle_comments(line);
 
-	/* now let's all the commands provided by the user */
+	/* now let's tokenize all the commands provided by the user */
 	commands = _strtok(line, "\n;");
 	if (commands == NULL)
 	{
@@ -33,6 +33,7 @@ int parse_line(char *line, path_t *path_list)
 
 	exit_code = parse(commands, path_list, line);
 	free_str(commands);
+
 	return (exit_code);
 }
 
@@ -136,7 +137,7 @@ void parse_helper(char **commands, char **sub_command, path_t *path_list,
 	if (!_strcmp(sub_command[0], "alias") ||
 		!_strcmp(sub_command[0], "unalias"))
 	{
-		exit_code = handle_alias(&aliases, sub_command);
+		exit_code = handle_alias(&aliases, commands[index]);
 		free_str(sub_command);
 		return;
 	}
@@ -144,10 +145,10 @@ void parse_helper(char **commands, char **sub_command, path_t *path_list,
 	alias_value = get_alias(aliases, sub_command[0]);
 	if (alias_value != NULL)
 	{
-		safe_free(sub_command[0]);
-		sub_command[0] = _strdup(alias_value);
+		build_alias_cmd(&sub_command, alias_value);
 		safe_free(alias_value);
 	}
+
 	exit_code = handle_builtin(sub_command, commands, line, aliases, path_list,
 							   exit_code);
 	if (exit_code != NOT_BUILTIN)

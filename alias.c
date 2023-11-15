@@ -75,20 +75,23 @@ void print_aliases(const alias_t *head)
  *
  * Return: 0 if alias was found and removed successfully, else 1
  */
-int unalias(alias_t **head, char **command)
+int unalias(alias_t **head, char *command)
 {
 	alias_t *current, *prev;
 	size_t i;
-	char *name;
+	char **names;
 	int exit_code = 1; /* assume failure by default */
 
+	names = _strtok(command, NULL);
+	if (names == NULL)
+		return (-1);
+
 	current = *head;
-	for (i = 1; command[i] != NULL; i++)
+	for (i = 1; names[i] != NULL; i++)
 	{
-		name = strtok(command[i], "=");
 		while (current != NULL)
 		{
-			if (!_strcmp(current->name, name))
+			if (!_strcmp(current->name, names[i]))
 			{
 				if (current == *head)
 					*head = (*head)->next;
@@ -106,10 +109,12 @@ int unalias(alias_t **head, char **command)
 
 		if (exit_code != 0)
 		{
-			dprintf(2, "unalias: %s not found\n", name);
+			dprintf(2, "unalias: %s not found\n", names[i]);
 			exit_code = 1;
 		}
+		safe_free(names[i]);
 	}
+	free_str(names);
 	return (exit_code);
 }
 
