@@ -156,8 +156,8 @@ void parse_helper(char **commands, char **sub_command, path_t *path_list,
 		free_str(sub_command);
 		return; /* shell builtin executed well */
 	}
-
-	if (path_list != NULL) /* handle the command with the PATH variable */
+	/* handle the command with the PATH variable */
+	if (path_list != NULL && !_strchr(sub_command[0], '/'))
 	{
 		exit_code = handle_with_path(path_list, sub_command);
 		if (exit_code == -1)
@@ -166,7 +166,7 @@ void parse_helper(char **commands, char **sub_command, path_t *path_list,
 	}
 	else
 	{
-		if (access(sub_command[0], X_OK) == 0 && _strchr(sub_command[0], '/'))
+		if (access(sub_command[0], X_OK) == 0)
 			exit_code = execute_command(sub_command[0], sub_command);
 		else
 			exit_code = print_cmd_not_found(sub_command, commands, index);
