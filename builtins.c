@@ -133,7 +133,6 @@ int handle_exit(char *exit_code, int status,
 	}
 
 	code = _atoi(exit_code);
-	safe_free(exit_code);
 	cleanup("spatt", line, path_list, aliases, sub_command, commands);
 	exit(code);
 }
