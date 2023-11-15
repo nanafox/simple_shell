@@ -46,6 +46,8 @@ int handle_file_as_input(char *filename, path_t *path_list)
 	fd = open(filename, O_RDONLY);
 	if (fd == -1)
 	{
+		/* we couldn't open the file, let's clean and leave */
+		free_list(&path_list);
 		dprintf(2, "%s: 0: Can't open %s\n", _getenv("msh"), filename);
 		return (CMD_NOT_FOUND);
 	}
@@ -55,6 +57,7 @@ int handle_file_as_input(char *filename, path_t *path_list)
 
 	if (n_read == -1)
 	{
+		multi_free("sp", line, &path_list);
 		return (-1); /* reading file failed */
 	}
 
