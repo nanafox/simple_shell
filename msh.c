@@ -33,11 +33,13 @@ int main(int argc, char *argv[])
 			perror("_getline");
 			return (-1);
 		}
-		if (n_read == 0) /* most definitely Ctrl+D or Ctrl+C was received */
+		if (n_read == 0) /* most definitely Ctrl+D, clean up and leave */
 		{
+			safe_free(line);
+			line = _strdup("exit");
 			if (isatty(STDIN_FILENO))
-				printf("\n");
-			break;
+				printf("exit\n");
+			return (parse_line(line, path_list));
 		}
 		exit_code = parse_line(line, path_list);
 		safe_free(line);
