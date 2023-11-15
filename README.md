@@ -5,34 +5,34 @@ MSH is a minimalistic shell implementation that provides a basic command-line in
 ## Table of Contents
 
 - [MSH (Minimal Shell)](#msh-minimal-shell)
-  - [Table of Contents](#table-of-contents)
-    - [Change Directory (`cd`)](#change-directory-cd)
-    - [Alias and Unalias](#alias-and-unalias)
-      - [Usage:](#usage)
-    - [Logical Operators (`&&` and `||`)](#logical-operators--and-)
-      - [Example:](#example)
-    - [System Commands](#system-commands)
-      - [Example:](#example-1)
-    - [Exit Command](#exit-command)
-      - [Example:](#example-2)
-    - [Setenv and Unsetenv](#setenv-and-unsetenv)
-      - [Example:](#example-3)
-    - [File as Input](#file-as-input)
-      - [Example:](#example-4)
-    - [Comments](#comments)
-      - [Example:](#example-5)
-    - [Variable Expansion](#variable-expansion)
-      - [Example:](#example-6)
-    - [Command Separator (`;`)](#command-separator-)
-      - [Example:](#example-7)
-    - [Custom Env](#custom-env)
-      - [Example:](#example-8)
-    - [PATH](#path)
-    - [Commands with and without Arguments](#commands-with-and-without-arguments)
-      - [Examples:](#examples)
-  - [Releases](#releases)
-  - [Download and Usage](#download-and-usage)
-  - [Author](#author)
+	- [Table of Contents](#table-of-contents)
+		- [Change Directory (`cd`)](#change-directory-cd)
+		- [Alias and Unalias](#alias-and-unalias)
+			- [Usage:](#usage)
+		- [Logical Operators (`&&` and `||`)](#logical-operators--and-)
+			- [Example:](#example)
+		- [System Commands](#system-commands)
+			- [Example:](#example-1)
+		- [Exit Command](#exit-command)
+			- [Example:](#example-2)
+		- [Setenv and Unsetenv](#setenv-and-unsetenv)
+			- [Example:](#example-3)
+		- [File as Input](#file-as-input)
+			- [Example:](#example-4)
+		- [Comments](#comments)
+			- [Example:](#example-5)
+		- [Variable Expansion](#variable-expansion)
+			- [Example:](#example-6)
+		- [Command Separator (`;`)](#command-separator-)
+			- [Example:](#example-7)
+		- [Custom Env](#custom-env)
+			- [Example:](#example-8)
+		- [PATH](#path)
+		- [Commands with and without Arguments](#commands-with-and-without-arguments)
+			- [Examples:](#examples)
+	- [Releases](#releases)
+	- [Download and Usage](#download-and-usage)
+	- [Author](#author)
 
 ---
 
@@ -46,13 +46,25 @@ visited before their current working directory.
 
 ### Alias and Unalias
 
-MSH supports aliasing commands for convenience using the `alias` command and removing aliases with `unalias`. This enables users to create shorthand notations for commonly used commands. Currently handles only one command (without arguments) as the value of the alias.(Future updates will make it more dynamic)
+MSH supports aliasing commands for convenience using the `alias` command and removing aliases with `unalias`. This enables users to create shorthand notations for commonly used commands.
 
 #### Usage:
 
 ```bash
 alias cls='clear'
 alias md=mkdir
+
+# Improved usage
+alias ls="ls --color=auto" ping="ping -c 5"
+alias memchk='valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes -s'
+alias flush_dns_cache=""
+alias lsfwrules='sudo iptables -nv --line-numbers -L '
+.
+.
+.
+alias flush_dns_cache='resolvectl flush-caches'
+alias l1="ls -1"
+alias grep='grep --color=auto'
 
 unalias cls # remove the 'cls' alias
 ```
