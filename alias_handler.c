@@ -136,7 +136,7 @@ void build_alias_cmd(char ***sub_command, char *alias_value)
 		dup_array = duplicate_str_array((*sub_command) + 1);
 		if (dup_array == NULL)
 		{
-			fprintf("alias: Memory allocation failed\n");
+			fprintf(stderr, "alias: Memory allocation failed\n");
 			return;
 		}
 
