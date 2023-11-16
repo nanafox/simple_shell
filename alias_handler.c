@@ -11,6 +11,9 @@ static int exit_code;
  */
 int handle_alias(alias_t **head, char *command)
 {
+	while (*command == ' ')
+		command++; /* remove all the leading spaces */
+
 	if (_strlen(command) == 5)
 		print_aliases(*head);
 
@@ -74,7 +77,7 @@ void parse_aliases(const char *input, alias_t **aliases)
 			return;
 		if (alias_count)
 			process_non_matching(*aliases, input_ptr, 0);
-		alias_count++;					/* increment alias count */
+		alias_count++;				   /* increment alias count */
 		input_ptr += matches[0].rm_eo; /* keep searching */
 	}
 	if (alias_count)
@@ -131,6 +134,11 @@ void build_alias_cmd(char ***sub_command, char *alias_value)
 	{
 		/* save a copy of the the commands array, excluding the alias */
 		dup_array = duplicate_str_array((*sub_command) + 1);
+		if (dup_array == NULL)
+		{
+			fprintf("alias: Memory allocation failed\n");
+			return;
+		}
 
 		/* memory and build the command line string based on the alias value */
 		free_str(*sub_command);
