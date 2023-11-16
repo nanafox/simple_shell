@@ -11,6 +11,9 @@ static int exit_code;
  */
 int handle_alias(alias_t **head, char *command)
 {
+	while (*command == ' ')
+		command++; /* remove all the leading spaces */
+
 	if (_strlen(command) == 5)
 		print_aliases(*head);
 
