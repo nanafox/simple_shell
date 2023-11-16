@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 		}
 
 		tokens = _strtok(line, "\n");
-		for (i = 0; tokens[i] != NULL; i++)
+		for (i = 0; tokens != NULL && tokens[i] != NULL; i++)
 		{
 			if ((!_strcmp(tokens[i], "exit") && tokens[i + 1] == NULL))
 			{
