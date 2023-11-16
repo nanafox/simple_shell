@@ -16,6 +16,7 @@ static alias_t *aliases;
 int parse_line(char *line, path_t *path_list, const char *prog_name)
 {
 	char **commands = NULL;
+
 	/* skip normal ENTER keys and leading comments */
 	if (*line == '\n' || *line == '#')
 		return (0);
@@ -24,7 +25,7 @@ int parse_line(char *line, path_t *path_list, const char *prog_name)
 	line = handle_comments(line);
 
 	/* now let's tokenize all the commands provided by the user */
-	commands = _strtok(line, "\n;");
+	commands = _strtok(line, ";\n");
 	if (commands == NULL)
 	{
 		perror("_strtok");

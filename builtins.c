@@ -118,9 +118,10 @@ int handle_exit(char *exit_code, const char *prog_name, int status,
 	size_t illegal_num_count = 1;
 	int code;
 
+	(void)line;
 	if (exit_code == NULL)
 	{
-		cleanup("spatt", line, path_list, aliases, sub_command, commands);
+		cleanup("patt", path_list, aliases, sub_command, commands);
 		exit(status);
 	}
 
@@ -133,7 +134,7 @@ int handle_exit(char *exit_code, const char *prog_name, int status,
 	}
 
 	code = _atoi(exit_code);
-	cleanup("spatt", line, path_list, aliases, sub_command, commands);
+	cleanup("patt", path_list, aliases, sub_command, commands);
 	exit(code);
 }
 

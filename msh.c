@@ -1,5 +1,7 @@
 #include "shell.h"
 
+static char *line;
+static char **tokens;
 
 /**
  * main - the entry point for the shell
@@ -10,8 +12,7 @@
  */
 int main(int argc, char *argv[])
 {
-	char *line = NULL;
-	size_t len = 0;
+	size_t i, len = 0;
 	ssize_t n_read = 0;
 	int exit_code = 0;
 	path_t *path_list = NULL;
@@ -22,30 +23,34 @@ int main(int argc, char *argv[])
 		exit_code = handle_file_as_input(argv, path_list);
 		return (exit_code);
 	}
+
 	while (RUNNING)
 	{
 		show_prompt();
 		fflush(stdout);
 
 		n_read = _getline(&line, &len, STDIN_FILENO);
-		if (n_read == -1)
-		{
-			safe_free(line);
-			perror("_getline");
-			return (-1);
-		}
 		if (n_read == 0) /* most definitely Ctrl+D, clean up and leave */
 		{
-			safe_free(line);
-			line = _strdup("exit");
 			if (isatty(STDIN_FILENO))
 				printf("exit\n");
-			return (parse_line(line, path_list, argv[0]));
+			return (parse_line("exit", path_list, argv[0]));
 		}
-		exit_code = parse_line(line, path_list, argv[0]);
+
+		tokens = _strtok(line, "\n");
+		for (i = 0; tokens[i] != NULL; i++)
+		{
+			if ((!_strcmp(tokens[i], "exit") && tokens[i + 1] == NULL))
+			{
+				safe_free(tokens[i]);
+				return (parse_line("exit", path_list, argv[0]));
+			}
+			exit_code = parse_line(tokens[i], path_list, argv[0]);
+			safe_free(tokens[i]);
+		}
+		safe_free(tokens);
 		safe_free(line);
 	}
-
 	return (exit_code);
 }
 
@@ -87,4 +92,25 @@ void show_prompt(void)
 	/* show the prompt in interactive modes only */
 	if (isatty(STDIN_FILENO))
 		printf("%s", prompt);
+}
+
+/**
+ * clean - cleans up the memory allocated by the getline function on exit
+ */
+void clean(void)
+{
+	if (line != NULL)
+		safe_free(line);
+
+	if (tokens != NULL)
+	{
+		size_t i;
+
+		for (i = 0; tokens[i] != NULL; i++)
+		{
+			free(tokens[i]);
+			tokens[i] = NULL;
+		}
+		free(tokens);
+	}
 }

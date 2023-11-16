@@ -71,6 +71,9 @@ void multi_free(const char *format, ...);
 /* a custom implementation of the getline function */
 ssize_t _getline(char **lineptr, size_t *n, int fd);
 
+/* cleans up memory for the line received from _getline on exit */
+void clean(void) __attribute__((destructor));
+
 /* shows the prompt in interactive mode */
 void show_prompt(void);
 
