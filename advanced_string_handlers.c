@@ -38,7 +38,7 @@ char **_strtok(const char *str, const char *delim)
 
 			/* memory allocation for new word failed, clean up and leave */
 			if (str_array[index] == NULL)
-				return (free_str(str_array), NULL);
+				return (free_str(&str_array), NULL);
 			index++;
 		}
 		else if (!_strchr(tmp_delim, str[i]) && !_strchr(tmp_delim, str[i + 1]))

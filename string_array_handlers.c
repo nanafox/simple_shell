@@ -18,7 +18,7 @@ char **duplicate_str_array(char **original)
 	while (original[size] != NULL)
 		size++;
 
-	duplicate = (char **)malloc((size + 1) * sizeof(char *));
+	duplicate = malloc((size + 1) * sizeof(char *));
 	if (duplicate == NULL)
 		return (NULL);
 
@@ -27,7 +27,7 @@ char **duplicate_str_array(char **original)
 		duplicate[i] = _strdup(original[i]);
 		if (duplicate[i] == NULL)
 		{
-			free_str(duplicate);
+			free_str(&duplicate);
 			return (NULL);
 		}
 	}

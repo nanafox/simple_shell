@@ -124,15 +124,19 @@ void _free(void **ptr)
  * free_str - frees memory allocated for an array of strings
  * @str_array: string array
  */
-void free_str(char **str_array)
+void free_str(char ***str_array)
 {
 	int i = 0;
 
+	if (str_array == NULL || (*str_array) == NULL)
+		return; /* there's nothing to free */
+
 	/* free memory allocated for each string */
-	for (i = 0; str_array[i] != NULL; i++)
+	for (i = 0; (*str_array)[i] != NULL; i++)
 	{
-		safe_free(str_array[i]);
+		safe_free((*str_array)[i]);
 	}
 
-	safe_free(str_array);
+	if ((*str_array) != NULL)
+		safe_free((*str_array));
 }

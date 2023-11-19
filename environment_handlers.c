@@ -34,14 +34,16 @@ char *_getenv(const char *name)
 path_t *build_path(path_t **head)
 {
 	size_t i = 0;
-	char *path_value, **pathnames;
-	path_t *new_node, *tail;
+	char *path_value = NULL, **pathnames = NULL;
+	path_t *new_node = NULL, *tail = NULL;
 
 	path_value = _getenv("PATH");
 	if (path_value == NULL || *path_value == '\0')
 		return (NULL); /* PATH is not set */
 
 	pathnames = _strtok(path_value, ":");
+	if (pathnames == NULL)
+		return (NULL); /* couldn't get the list of PATH directories */
 	while (pathnames[i] != NULL)
 	{
 		new_node = malloc(sizeof(path_t));
@@ -69,7 +71,7 @@ path_t *build_path(path_t **head)
 		i++;
 	}
 
-	free_str(pathnames);
+	free_str(&pathnames);
 	return (*head);
 }
 

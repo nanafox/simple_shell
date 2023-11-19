@@ -8,6 +8,9 @@ void free_list(path_t **head)
 {
 	path_t *current_node;
 
+	if (head == NULL || *head == NULL)
+		return;
+
 	while (*head != NULL)
 	{
 		current_node = (*head);
@@ -25,6 +28,9 @@ void free_list(path_t **head)
 void free_aliases(alias_t **head)
 {
 	alias_t *current;
+
+	if (*head == NULL || head == NULL)
+		return;
 
 	while (*head != NULL)
 	{
@@ -63,7 +69,7 @@ void multi_free(const char *format, ...)
 			safe_free(line);
 			break;
 		case 't':
-			free_str(va_arg(ap, char **));
+			free_str(va_arg(ap, char ***));
 			break;
 		case 'p':
 			free_list(va_arg(ap, path_t **));

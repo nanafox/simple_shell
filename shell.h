@@ -7,6 +7,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -15,16 +16,16 @@
 
 /* macros */
 
-#define BUFF_SIZE			1024
-#define SPACE				' '
-#define CMD_NOT_FOUND		127
-#define PROMPT_SIZE			4096
-#define PATH_SIZE			2048
-#define NOT_BUILTIN			18
-#define RUNNING				1
-#define CMD_ERR				2
-#define MAX_ALIAS_LENGTH	50
-#define MAX_VALUE_LENGTH	2048
+#define BUFF_SIZE 1024
+#define SPACE ' '
+#define CMD_NOT_FOUND 127
+#define PROMPT_SIZE 4096
+#define PATH_SIZE 2048
+#define NOT_BUILTIN 18
+#define RUNNING 1
+#define CMD_ERR 2
+#define MAX_ALIAS_LENGTH 50
+#define MAX_VALUE_LENGTH 2048
 
 /* function macros */
 
@@ -54,9 +55,15 @@ int _strncmp(const char *s1, const char *s2, size_t n);
 int get_word_count(const char *str, const char *delim);
 char *_strstr(const char *haystack, const char *needle);
 
+/* numbers */
+
+int _atoi(const char *s);
+void _itoa(size_t n, char *s);
+void _reverse(char *buffer, size_t len);
+
 /* memory handlers */
 
-void free_str(char **str_array);
+void free_str(char ***str_array);
 char *new_word(const char *str, int start, int end);
 void *_memcpy(void *dest, const void *src, size_t n);
 void *_realloc(void *old_mem_blk, size_t old_size, size_t new_size);
@@ -99,12 +106,6 @@ void free_list(path_t **head);
 char *_getenv(const char *name);
 path_t *build_path(path_t **head);
 
-/* numbers */
-
-int _atoi(const char *s);
-void _itoa(size_t n, char *s);
-void _reverse(char *buffer, size_t len);
-
 /* aliases */
 
 /**
@@ -120,45 +121,70 @@ typedef struct alias
 	struct alias *next;
 } alias_t;
 
-void free_aliases(alias_t **head);
-void print_aliases(const alias_t *head);
-int unalias(alias_t **head, char *command);
-char *get_alias(alias_t *head, const char *name);
-int handle_alias(alias_t **head, char *command_line);
-int print_alias(const alias_t *head, const char *name);
+void free_aliases(alias_t **aliases);
+void print_aliases(const alias_t *aliases);
+int unalias(alias_t **aliases, char *command);
+char *get_alias(alias_t *aliases, const char *name);
+int handle_alias(alias_t **aliases, char *command_line);
+int print_alias(const alias_t *aliases, const char *name);
 void parse_aliases(const char *input, alias_t **aliases);
 void build_alias_cmd(char ***sub_command, char *alias_value);
-alias_t *add_alias(alias_t **head, const char *name, const char *value);
+alias_t *add_alias(alias_t **aliases, const char *name, const char *value);
 void process_non_matching(alias_t *aliases, const char *non_matching, int end);
+
+
+/* shell command context */
+
+/**
+ * struct shell - a blueprint for the shell
+ * @aliases: a list of aliases
+ * @path_list: a list of the PATH directories
+ * @line: the command string provided by the user
+ * @commands: the inital tokenized commands (splits on semi-colons & newlines)
+ * @sub_command: the tokenized version of each command in the commands array
+ * @prog_name: the name of we are running
+ * @err_count: the number of times an erro has been encountered
+ * @tokens: stores multiple tokens before they are further processed
+ * @token: a single token
+ * @exit_code: the exit code of the last executed program
+ */
+typedef struct shell
+{
+	alias_t *aliases;
+	path_t *path_list;
+	char *line;
+	char **commands;
+	char **sub_command;
+	char **tokens;
+	char *token;
+	const char *prog_name;
+	size_t err_count;
+	int exit_code;
+} shell_t;
+
+shell_t *init_shell(void);
+void sigint_handler(int signum);
 
 /* builtin handlers */
 
 int _unsetenv(const char *name);
-int handle_cd(const char *pathname, const char *prog_name);
+int handle_cd(shell_t *msh);
 int _setenv(const char *name, const char *value, int overwrite);
-int handle_builtin(char **sub_command, char **commands, char *line,
-		const char *prog_name, alias_t *aliases, path_t *path_list, int exit_code);
-int handle_exit(char *exit_code, const char *prog_name, int status,
-				void (*cleanup)(const char *format, ...), char **sub_command,
-				char **commands, char *line, path_t **path_list,
-				alias_t **aliases);
+int handle_builtin(shell_t *msh);
+int handle_exit(shell_t *msh, void (*cleanup)(const char *format, ...));
 
 /* parsers and executors */
 
 char *get_operator(char *str);
 char *handle_comments(char *command);
-int parse_line(char *line, path_t *path_list, const char *prog_name);
-int execute_command(char *pathname, char *argv[]);
-int parse_and_execute(char **commands, char *cur_cmd, path_t *path_list,
-					  char *line, const char *prog_name, size_t index);
-int handle_with_path(path_t *path_list, char **sub_command);
-int print_cmd_not_found(const char *prog_name, char **sub_command,
-		char **commands, size_t index);
-int handle_file_as_input(char **argv, path_t *path_list);
-char **handle_variables(char **commands, int exit_code);
-int parse(char **commands, path_t *path_list, char *line,
-		const char *prog_name);
-void parse_helper(char **commands, char **sub_command, path_t *path_list,
-				  char *line, const char *prog_name, size_t index);
+int parse_line(shell_t *msh);
+int execute_command(const char *pathname, shell_t *msh);
+int parse_and_execute(shell_t *msh, size_t index);
+int handle_with_path(shell_t *msh);
+int print_cmd_not_found(shell_t *msh);
+void handle_file_as_input(const char *filename, shell_t *msh);
+char **handle_variables(shell_t *msh);
+int parse(shell_t *msh);
+void parse_helper(shell_t *msh, size_t index);
 
 #endif /* SHELL_H */

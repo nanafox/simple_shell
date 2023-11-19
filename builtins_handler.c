@@ -2,43 +2,35 @@
 
 /**
  * handle_builtin - handles the builtin commands
- * @commands: an array of command line strings
- * @sub_command: the actual command
- * @path_list: a list of pathnames in the PATH variable
- * @line: the command line received
- * @exit_code: the exit code to use
- * @aliases: a list of aliases
- * @prog_name: the name of the running program
+ * @msh: contains all the data relevant to the shell's operation
  *
  * Return: exit code
  */
-int handle_builtin(char **sub_command, char **commands, char *line,
-		const char *prog_name, alias_t *aliases, path_t *path_list, int exit_code)
+int handle_builtin(shell_t *msh)
 {
-	if (!_strcmp(sub_command[0], "env") ||
-		!_strcmp(sub_command[0], "printenv"))
+	if (!_strcmp(msh->sub_command[0], "env") ||
+		!_strcmp(msh->sub_command[0], "printenv"))
 	{
 		_printenv();
 		return (0);
 	}
-	else if (!_strcmp(sub_command[0], "exit"))
+	else if (!_strcmp(msh->sub_command[0], "exit"))
 	{
-		return (handle_exit(sub_command[1], prog_name, exit_code, multi_free,
-					sub_command, commands, line, &path_list, &aliases));
+		return (handle_exit(msh, multi_free));
 	}
 
 	/* let's handle the builtin 'cd' command */
-	else if (!_strcmp(sub_command[0], "cd"))
-		return (handle_cd(sub_command[1], prog_name));
+	else if (!_strcmp(msh->sub_command[0], "cd"))
+		return (handle_cd(msh));
 
-	else if (!_strcmp(sub_command[0], "setenv"))
+	else if (!_strcmp(msh->sub_command[0], "setenv"))
 	{
-		if (sub_command[1] && sub_command[2])
-			return (setenv(sub_command[1], sub_command[2], 1));
+		if (msh->sub_command[1] && msh->sub_command[2])
+			return (setenv(msh->sub_command[1], msh->sub_command[2], 1));
 		return (1); /* invalid number of parameters received */
 	}
-	else if (!_strcmp(sub_command[0], "unsetenv"))
-		return (_unsetenv(sub_command[1]));
+	else if (!_strcmp(msh->sub_command[0], "unsetenv"))
+		return (_unsetenv(msh->sub_command[1]));
 
 	return (NOT_BUILTIN); /* not a builtin command */
 }
