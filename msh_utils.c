@@ -30,13 +30,47 @@ shell_t *init_shell(void)
 }
 
 /**
+ * get_hostname - returns the hostname of the system using the '/ect/hostname'
+ * file
+ * @buffer: the buffer to write the hostname to, it should large enough.
+ *
+ * Return: the hostname if found, else defaults to using 'msh' when anything
+ * goes wrong
+ */
+char *get_hostname(char *buffer)
+{
+	int fd, n_read;
+
+	fd = open("/etc/hostname", O_RDONLY);
+
+	/* let's check whether the file opening failed */
+	if (fd == -1)
+	{
+		/* looks like it did, fall back to using 'msh' as the hostname */
+		_strcpy(buffer, "msh");
+		return (buffer);
+	}
+
+	/* file opening was successful, let's grab the hostname */
+	n_read = read(fd, buffer, 100);
+
+	/* one more time, let's check for read failures and fall back as needed */
+	if (n_read == -1 || n_read == 0)
+		_strcpy(buffer, "msh");
+	else
+		buffer[n_read - 1] = '\0'; /* hostname was succesfully grabbed, use it */
+
+	close(fd);
+
+	return (buffer);
+}
+/**
  * show_prompt - shows the prompt in interactive mode
  */
 void show_prompt(void)
 {
-	char prompt[PROMPT_SIZE];
-	char *username = _getenv("USER");
-	char *pwd;
+	char prompt[PROMPT_SIZE], hostname[100];
+	char *username = _getenv("USER"), *pwd;
 
 	if (username != NULL)
 	{
@@ -49,7 +83,7 @@ void show_prompt(void)
 					  : (_strrchr(pwd, '/') +
 						 1); /* show only the current directory */
 
-			sprintf(prompt, "[%s@msh %s]%% ", username,
+			sprintf(prompt, "[%s@%s %s]%% ", username, get_hostname(hostname),
 					(!_strcmp(pwd, username))
 						? "~" /* show '~' for the user's $HOME directory */
 						: pwd);
