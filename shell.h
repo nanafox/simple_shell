@@ -70,7 +70,7 @@ void *_realloc(void *old_mem_blk, size_t old_size, size_t new_size);
 
 /* a safer way to deallocate dynamic memory */
 void _free(void **ptr);
-#define safe_free(p) _free((void **)&(p)) /* _free's frontend */
+#define safe_free(ptr) _free((void **)&(ptr)) /* _free's frontend */
 
 /* frees memory for a variable number of objects */
 void multi_free(const char *format, ...);
@@ -78,11 +78,11 @@ void multi_free(const char *format, ...);
 /* a custom implementation of the getline function */
 ssize_t _getline(char **lineptr, size_t *n, int fd);
 
-/* cleans up memory for the line received from _getline on exit */
-void clean(void) __attribute__((destructor));
-
 /* shows the prompt in interactive mode */
 void show_prompt(void);
+
+/* retrieves the hostname from the '/etc/hostname' file */
+char *get_hostname(char *buffer);
 
 /* environment and PATH handlers */
 
