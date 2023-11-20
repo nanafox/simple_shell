@@ -1,206 +1,193 @@
 #include "shell.h"
 
-static int exit_code; /* keeps track of all exit codes */
-static alias_t *aliases;
-
 /**
  * parse_line - parses the receive command line, processes it before handing it
  * over to the executor only after it has confirmed the command is valid
- * @line: the command line received
- * @path_list: a list of pathnames in the PATH variable
- * @prog_name: the name of the running program
+ * @msh: contains all the data relevant to the shell's operation
  *
  * Return: the exit code of the executed program, else -1 if something goes
  * wrong
  */
-int parse_line(char *line, path_t *path_list, const char *prog_name)
+int parse_line(shell_t *msh)
 {
-	char **commands = NULL;
+	size_t i;
 
 	/* skip normal ENTER keys and leading comments */
-	if (*line == '\n' || *line == '#')
+	if (*msh->line == '\n' || *msh->line == '#')
 		return (0);
 
 	/* first of all, let's get rid of all comments */
-	line = handle_comments(line);
+	msh->line = handle_comments(msh->line);
 
-	/* now let's tokenize all the commands provided by the user */
-	commands = _strtok(line, ";\n");
-	if (commands == NULL)
+	msh->tokens = _strtok(msh->line, "\n");
+	if (msh->tokens == NULL)
 	{
-		perror("_strtok");
-		return (-1); /* an error occurred while getting the commands */
+		fprintf(stderr, "Not enough system memory to continue\n");
+		return (-1);
 	}
 
-	exit_code = parse(commands, path_list, line, prog_name);
-	free_str(commands);
+	for (i = 0; msh->tokens[i] != NULL; i++)
+	{
+		msh->token = msh->tokens[i];
 
-	return (exit_code);
+		if (!_strcmp(msh->tokens[i], "exit") && msh->tokens[i + 1] == NULL)
+		{
+			handle_exit(msh, multi_free);
+		}
+
+		/* now let's tokenize all the commands provided by the user */
+		msh->commands = _strtok(msh->token, ";\n");
+		if (msh->commands == NULL)
+		{
+			fprintf(stderr, "Memory allocation failed...\n");
+			return (-1);
+		}
+
+		msh->exit_code = parse(msh);
+		free_str(&msh->commands);
+	}
+
+	free_str(&msh->tokens);
+	return (msh->exit_code);
 }
 
 /**
  * parse - parses an array of commands received from the prompt
- * @commands: an array of command line strings
- * @path_list: a list of pathnames in the PATH variable
- * @line: the command line received
- * @prog_name: the name of the running program
+ * @msh: contains all the data relevant to the shell's operation
  *
  * Return: the exit code of the executed program
  */
-int parse(char **commands, path_t *path_list, char *line,
-		const char *prog_name)
+int parse(shell_t *msh)
 {
 	ssize_t i, offset;
-	char **sub_command = NULL, *cmd = NULL, *operator = NULL;
+	char *shell_t = NULL, *operator = NULL;
 	char *next_cmd = NULL, *temp_next_cmd = NULL;
 
-	for (i = 0; commands[i] != NULL; i++)
+	for (i = 0; msh->commands[i] != NULL; i++)
 	{
-		operator = get_operator(commands[i]);
+		operator = get_operator(msh->commands[i]);
 		if (operator != NULL)
 		{
-			offset = strcspn(commands[i], operator);
+			offset = strcspn(msh->commands[i], operator);
 			/* extract the command before the operator */
-			cmd = strndup(commands[i], offset);
-			if (cmd == NULL)
+			shell_t = strndup(msh->commands[i], offset);
+			if (shell_t == NULL)
 				return (0);
-			sub_command = _strtok(cmd, NULL);
-			safe_free(cmd);
-			if (sub_command == NULL)
+			msh->sub_command = _strtok(shell_t, NULL);
+			safe_free(shell_t);
+			if (msh->sub_command == NULL)
 				return (0);
-			sub_command = handle_variables(sub_command, exit_code);
-			parse_helper(commands, sub_command, path_list, line, prog_name, i);
+			msh->sub_command = handle_variables(msh);
+			parse_helper(msh, i);
 
-			temp_next_cmd = _strdup(&commands[i][offset + 2]);
+			temp_next_cmd = _strdup(&msh->commands[i][offset + 2]);
 			safe_free(next_cmd);
-			safe_free(commands[i]);
+			safe_free(msh->commands[i]);
 
 			/* check the exit code and react accordingly */
-			if ((!_strcmp(operator, "&&") && exit_code == 0) ||
-				(!_strcmp(operator, "||") && exit_code != 0))
+			if ((!_strcmp(operator, "&&") && msh->exit_code == 0) ||
+					(!_strcmp(operator, "||") && msh->exit_code != 0))
 			{
-				commands[i] = temp_next_cmd;
-				parse(commands, path_list, line, prog_name);
+				msh->commands[i] = temp_next_cmd;
+				parse(msh);
 				next_cmd = temp_next_cmd;
 			}
 			else
 				safe_free(temp_next_cmd);
 		}
 		else
-			parse_and_execute(commands, commands[i], path_list, line, prog_name, i);
+			parse_and_execute(msh, i);
 	}
-	return (exit_code);
+	return (msh->exit_code);
 }
 
 /**
  * parse_and_execute - parses each sub command line and executes it
- * @commands: an array of command line strings
- * @path_list: a list of pathnames in the PATH variable
- * @cur_cmd: the current command in the commands array
- * @line: the command line received
+ * @msh: contains all the data relevant to the shell's operation
  * @index: the current index in commands array
- * @prog_name: the name of the running program
  *
  * Return: the exit code of the executed program
  */
-int parse_and_execute(char **commands, char *cur_cmd, path_t *path_list,
-					  char *line, const char *prog_name, size_t index)
+int parse_and_execute(shell_t *msh, size_t index)
 {
-	char **sub_command = NULL;
-
 	/* get the sub commands and work on them */
-	sub_command = _strtok(cur_cmd, NULL);
-	if (sub_command == NULL)
+	msh->sub_command = _strtok(msh->commands[index], NULL);
+	if (msh->sub_command == NULL)
 	{
 		return (0); /* probably just lots of tabs or spaces, maybe both */
 	}
 
 	/* check for variables */
-	sub_command = handle_variables(sub_command, exit_code);
-	parse_helper(commands, sub_command, path_list, line, prog_name, index);
+	msh->sub_command = handle_variables(msh);
+	if (msh->sub_command[0] != NULL && msh->sub_command != NULL)
+		parse_helper(msh, index);
+	else
+		free_str(&msh->sub_command);
 
 	/* cleanup and leave */
-	safe_free(commands[index]);
-	return (exit_code);
+	safe_free(msh->commands[index]);
+	return (msh->exit_code);
 }
 
 /**
  * parse_helper - performs extra parsing on behalf of the parse and execute
  * function
- * @commands: an array of commands received on the command line
- * @sub_command: an array of sub commands generated from the commands array
- * @path_list: a list of PATH directories
- * @line: the actual line the user typed on the prompt
- * @prog_name: the name of the running program
+ * @msh: contains all the data relevant to the shell's operation
  * @index: the current index in commands array
  */
-void parse_helper(char **commands, char **sub_command, path_t *path_list,
-				  char *line, const char *prog_name, size_t index)
+void parse_helper(shell_t *msh, size_t index)
 {
 	char *alias_value;
 
-	if (!_strcmp(sub_command[0], "alias") ||
-		!_strcmp(sub_command[0], "unalias"))
+	if (!_strcmp(msh->sub_command[0], "alias") ||
+			!_strcmp(msh->sub_command[0], "unalias"))
 	{
-		exit_code = handle_alias(&aliases, commands[index]);
-		free_str(sub_command);
+		msh->exit_code = handle_alias(&msh->aliases, msh->commands[index]);
+		free_str(&msh->sub_command);
 		return;
 	}
 
-	alias_value = get_alias(aliases, sub_command[0]);
+	alias_value = get_alias(msh->aliases, msh->sub_command[0]);
 	if (alias_value != NULL)
 	{
-		build_alias_cmd(&sub_command, alias_value);
+		build_alias_cmd(&msh->sub_command, alias_value);
 		safe_free(alias_value);
 	}
 
-	exit_code = handle_builtin(sub_command, commands, line, prog_name,
-								aliases, path_list, exit_code);
-	if (exit_code != NOT_BUILTIN)
+	msh->exit_code = handle_builtin(msh);
+	if (msh->exit_code != NOT_BUILTIN)
 	{
-		free_str(sub_command);
+		free_str(&msh->sub_command);
 		return; /* shell builtin executed well */
 	}
 	/* handle the command with the PATH variable */
-	if (path_list != NULL && !_strchr(sub_command[0], '/'))
+	if (msh->path_list != NULL && !_strchr(msh->sub_command[0], '/'))
 	{
-		exit_code = handle_with_path(path_list, sub_command);
-		if (exit_code == -1)
-			exit_code = print_cmd_not_found(prog_name, sub_command, commands, index);
-		free_str(sub_command);
+		msh->exit_code = handle_with_path(msh);
+		if (msh->exit_code == -1)
+			msh->exit_code = print_cmd_not_found(msh);
 	}
 	else
 	{
-		if (access(sub_command[0], X_OK) == 0 && _strchr(sub_command[0], '/'))
-			exit_code = execute_command(sub_command[0], sub_command);
+		if (access(msh->sub_command[0], X_OK) == 0 &&
+				_strchr(msh->sub_command[0], '/'))
+			msh->exit_code = execute_command(msh->sub_command[0], msh);
 		else
-			exit_code = print_cmd_not_found(prog_name, sub_command, commands, index);
-		free_str(sub_command);
+			msh->exit_code = print_cmd_not_found(msh);
 	}
+	free_str(&msh->sub_command);
 }
 
 /**
  * print_cmd_not_found - prints the command not found error
- * @prog_name: the name of the running program
- * @sub_command: the actual command executed
- * @commands: a list of commands received on the command line
- * @index: current index in the commands list
+ * @msh: contains all the data relevant to the shell's operation
  *
  * Return: 127 command not found code, else 0
  */
-int print_cmd_not_found(const char *prog_name, char **sub_command,
-		char **commands, size_t index)
+int print_cmd_not_found(shell_t *msh)
 {
-	static size_t err_count = 1;
+	dprintf(STDERR_FILENO, "%s: %lu: %s: not found\n", msh->prog_name,
+			++msh->err_count, msh->sub_command[0]);
 
-	dprintf(STDERR_FILENO, "%s: %lu: %s: not found\n", prog_name, err_count,
-			sub_command[0]);
-	err_count++;
-
-	if (commands[index + 1] == NULL)
-	{
-		return (CMD_NOT_FOUND); /* command not found */
-	}
-
-	return (0);
+	return (CMD_NOT_FOUND); /* command not found */
 }

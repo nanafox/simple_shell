@@ -98,58 +98,49 @@ int _unsetenv(const char *name)
 
 /**
  * handle_exit - handles the built-in `exit` command for the shell
- * @exit_code: the user provided exit code
- * @status: the exit status of the last executed process (used if the exit code
- * is not provided)
- * @cleanup: a pointer to the function that handles memory deallocation on exit
- * @commands: an array of command line strings
- * @sub_command: the command to execute
- * @path_list: a list of pathnames in the PATH variable
- * @aliases: a list of aliases
- * @prog_name: the name of the program
- * @line: the command line received
+ * @msh: contains all the data relevant to the shell's operation
+ * @cleanup: a cleanup function
  *
- * Return: 2 on error, else exits with @exit_code
+ * Return: 2 on error, else exits with the last the provided exit code
  */
-int handle_exit(char *exit_code, const char *prog_name, int status,
-		void (*cleanup)(const char *format, ...), char **sub_command,
-		char **commands, char *line, path_t **path_list, alias_t **aliases)
+int handle_exit(shell_t *msh, void (*cleanup)(const char *format, ...))
 {
-	size_t illegal_num_count = 1;
-	int code;
+	const char *status_code = (msh->sub_command) ? msh->sub_command[1] : NULL;
+	int exit_code = msh->exit_code;
 
-	(void)line;
-	if (exit_code == NULL)
+	if (status_code == NULL)
 	{
-		cleanup("patt", path_list, aliases, sub_command, commands);
-		exit(status);
+		cleanup("spattt", msh->line, &msh->path_list, &msh->aliases,
+				&msh->commands, &msh->sub_command, &msh->tokens);
+		safe_free(msh);
+		exit(exit_code);
 	}
 
-	if (isalpha(*exit_code) || _atoi(exit_code) < 0 || *exit_code == '-')
+	if (isalpha(*status_code) || _atoi(status_code) < 0 || *status_code == '-')
 	{
 		dprintf(STDERR_FILENO, "%s: %lu: exit: Illegal number: %s\n",
-				prog_name, illegal_num_count, exit_code);
-		illegal_num_count++;
+				msh->prog_name, ++msh->err_count, status_code);
 		return (CMD_ERR);
 	}
 
-	code = _atoi(exit_code);
-	cleanup("patt", path_list, aliases, sub_command, commands);
-	exit(code);
+	exit_code = _atoi(status_code);
+	cleanup("spattt", msh->line, &msh->path_list, &msh->aliases,
+			&msh->commands, &msh->sub_command, &msh->tokens);
+	safe_free(msh);
+	exit(exit_code);
 }
 
 /**
  * handle_cd - handles the builtin `cd` command
- * @pathname: the string containing the path to change directory to
- * @prog_name: the name of the program
+ * @msh: contains all the data relevant to the shell's operation
  *
  * Return: 0 on success, else 2 on error
  */
-int handle_cd(const char *pathname, const char *prog_name)
+int handle_cd(shell_t *msh)
 {
-	char *home = _getenv("HOME"), *oldpath = _getenv("OLDPWD");
 	char path[PATH_SIZE], pwd[BUFF_SIZE];
-	static size_t cd_err_count = 1;
+	const char *pathname = msh->sub_command[1];
+	char *home = _getenv("HOME"), *oldpath = _getenv("OLDPWD");
 
 	getcwd(pwd, BUFF_SIZE);
 	oldpath = (oldpath) ? oldpath : pwd;
@@ -163,12 +154,12 @@ int handle_cd(const char *pathname, const char *prog_name)
 			sprintf(path, "%s", ((dash) ? oldpath : pathname));
 		if (chdir(path) == -1)
 		{
-			if (strspn(pathname, "-") > 2)
-				dprintf(2, "%s: %lu: cd: Illegal option: --\n", prog_name, cd_err_count);
+			if (_strspn(pathname, "-") > 2)
+				fprintf(stderr, "%s: %lu: cd: Illegal option: --\n", msh->prog_name,
+						++msh->err_count);
 			else
-				dprintf(2, "%s: %lu: cd: can't cd to %s\n", prog_name,
-						cd_err_count, pathname);
-			cd_err_count++;
+				fprintf(stderr, "%s: %lu: cd: can't cd to %s\n", msh->prog_name,
+						++msh->err_count, pathname);
 			return (CMD_ERR);
 		}
 		if (dash)
@@ -201,6 +192,7 @@ void _printenv(void)
 	fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, 0644);
 	if (fd == -1)
 		return;
+
 	if (write(fd, "env", 3) != -1)
 	{
 		char *argv[] = {"/bin/sh", "/tmp/env", NULL};

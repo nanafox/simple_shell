@@ -141,19 +141,19 @@ void build_alias_cmd(char ***sub_command, char *alias_value)
 		}
 
 		/* memory and build the command line string based on the alias value */
-		free_str(*sub_command);
+		free_str(sub_command);
 		*sub_command = _strtok(alias_value, NULL);
 
 		/* concatenate both arrays to form a complete command string */
 		concatenate_arrays(sub_command, dup_array);
 
 		/* clean up and return */
-		free_str(dup_array);
+		free_str(&dup_array);
 	}
 	else
 	{
 		/* there was alias alright but no other arguments */
-		free_str(*sub_command);
+		free_str(sub_command);
 		*sub_command = _strtok(alias_value, NULL);
 	}
 }

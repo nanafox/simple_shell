@@ -2,26 +2,26 @@
 
 /**
  * handle_with_path - handles commands when the PATH is set
- * @path_list: a list of pathnames in the PATH variable
- * @sub_command: the command to execute
+ * @msh: contains all the data relevant to the shell's operation
  *
  * Return: the exit code of the child process, else -1 if the command is not in
  * the PATH provided
  */
-int handle_with_path(path_t *path_list, char **sub_command)
+int handle_with_path(shell_t *msh)
 {
 	char path[BUFF_SIZE];
+	path_t *path_list = msh->path_list;
 
 	while (path_list != NULL)
 	{
-		sprintf(path, "%s%s%s", path_list->pathname, "/", sub_command[0]);
+		sprintf(path, "%s%s%s", path_list->pathname, "/", msh->sub_command[0]);
 		if (access(path, X_OK) == 0)
 		{
-			return (execute_command(path, sub_command));
+			return (execute_command(path, msh));
 		}
-		else if (access(sub_command[0], X_OK) == 0)
+		else if (access(msh->sub_command[0], X_OK) == 0)
 		{
-			return (execute_command(sub_command[0], sub_command));
+			return (execute_command(path, msh));
 		}
 		path_list = path_list->next;
 	}
@@ -32,39 +32,45 @@ int handle_with_path(path_t *path_list, char **sub_command)
 /**
  * handle_file_as_input - handles execution when a file is given as input on
  * the command line (non-interactive mode)
- * @argv: array containing the file and program name
- * @path_list: a list of pathnames in the PATH variable
+ * @filename: the name of the file to read from
+ * @msh: contains all the data relevant to the shell's operation
  *
  * Return: 0, or the exit status of the just exited process
  */
-int handle_file_as_input(char **argv, path_t *path_list)
+void handle_file_as_input(const char *filename, shell_t *msh)
 {
-	char *line = NULL;
 	size_t n = 0;
-	int n_read, fd, exit_code = 0;
+	int n_read, fd;
 
-	fd = open(argv[1], O_RDONLY);
+	fd = open(filename, O_RDONLY);
 	if (fd == -1)
 	{
 		/* we couldn't open the file, let's clean and leave */
-		free_list(&path_list);
-		dprintf(2, "%s: 0: Can't open %s\n", argv[0], argv[1]);
-		return (CMD_NOT_FOUND);
+		free_list(&msh->path_list);
+		fprintf(stderr, "%s: 0: Can't open %s\n", msh->prog_name, filename);
+		exit(CMD_NOT_FOUND);
 	}
 
-	n_read = _getline(&line, &n, fd);
-	close(fd);
+	n_read = _getline(&msh->line, &n, fd);
+
+	/*
+	 * let us know if there was an error while closing file descriptor but
+	 * continue any way
+	 */
+	if (close(fd) == -1)
+		fprintf(stderr, "An error occurred while closing file descriptor #%d\n", fd);
 
 	if (n_read == -1)
 	{
-		multi_free("sp", line, &path_list);
-		return (-1); /* reading file failed */
+		msh->exit_code = -1;
+		handle_exit(msh, multi_free);
 	}
 
 	if (n_read)
-		exit_code = parse_line(line, path_list, argv[0]);
+	{
+		msh->prog_name = filename;
+		parse_line(msh);
+	}
 
-	multi_free("sp", line, &path_list);
-
-	return (exit_code);
+	handle_exit(msh, multi_free);
 }

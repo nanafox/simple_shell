@@ -2,12 +2,12 @@
 
 /**
  * execute_command - executes the command given
- * @pathname: path to the command
- * @argv: command line arguments
+ * @pathname: the absolute path to the binary file to execute
+ * @msh: the shell's context
  *
  * Return: 0 on success, -1 on failure
  */
-int execute_command(char *pathname, char *argv[])
+int execute_command(const char *pathname, shell_t *msh)
 {
 	int status;
 	pid_t pid;
@@ -21,8 +21,14 @@ int execute_command(char *pathname, char *argv[])
 
 	if (pid == 0)
 	{
-		if (execve(pathname, argv, environ) == -1)
+		if (execve(pathname, msh->sub_command, environ) == -1)
 		{
+			if (errno == EACCES)
+			{
+				fprintf(stderr, "%s: %lu: %s\n", msh->prog_name,
+						++msh->err_count, strerror(errno));
+				return (126);
+			}
 			perror("execve");
 			return (-1);
 		}
