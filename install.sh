@@ -2,7 +2,7 @@
 
  ################################################################
 #			MSH (Minimal Shell) Installation Script				 #
-#		Author: Maxwell Nana Forson <nanforsonjnr@gmail.com 	 #
+#		Author: Maxwell Nana Forson <nanaforsonjnr@gmail.com> 	 #
 #																 #
 #  The script takes care of building the executable file, then   #
 #  copies it to the /usr/bin/ directory making the msh shell     #
