@@ -60,7 +60,7 @@ int parse_line(shell_t *msh)
 int parse(shell_t *msh)
 {
 	ssize_t i, offset;
-	char *shell_t = NULL, *operator = NULL;
+	char *cur_cmd = NULL, *operator = NULL;
 	char *next_cmd = NULL, *temp_next_cmd = NULL;
 
 	for (i = 0; msh->commands[i] != NULL; i++)
@@ -70,11 +70,11 @@ int parse(shell_t *msh)
 		{
 			offset = strcspn(msh->commands[i], operator);
 			/* extract the command before the operator */
-			shell_t = strndup(msh->commands[i], offset);
-			if (shell_t == NULL)
+			cur_cmd = strndup(msh->commands[i], offset);
+			if (cur_cmd == NULL)
 				return (0);
-			msh->sub_command = _strtok(shell_t, NULL);
-			safe_free(shell_t);
+			msh->sub_command = _strtok(cur_cmd, NULL);
+			safe_free(cur_cmd);
 			if (msh->sub_command == NULL)
 				return (0);
 			msh->sub_command = handle_variables(msh);
