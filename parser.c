@@ -81,7 +81,8 @@ int parse(shell_t *msh)
 			parse_helper(msh, i);
 
 			temp_next_cmd = _strdup(&msh->commands[i][offset + 2]);
-			multi_free("ss", next_cmd, msh->commands[i]);
+			safe_free(next_cmd);
+			safe_free(msh->commands[i]);
 
 			/* check the exit code and react accordingly */
 			if ((!_strcmp(operator, "&&") && msh->exit_code == 0) ||
