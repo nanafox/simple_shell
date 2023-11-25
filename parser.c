@@ -86,7 +86,7 @@ int parse(shell_t *msh)
 
 			/* check the exit code and react accordingly */
 			if ((!_strcmp(operator, "&&") && msh->exit_code == 0) ||
-					(!_strcmp(operator, "||") && msh->exit_code != 0))
+				(!_strcmp(operator, "||") && msh->exit_code != 0))
 			{
 				msh->commands[i] = temp_next_cmd;
 				parse(msh);
@@ -187,7 +187,7 @@ void parse_helper(shell_t *msh, size_t index)
 int print_cmd_not_found(shell_t *msh)
 {
 	dprintf(STDERR_FILENO, "%s: %lu: %s: not found\n", msh->prog_name,
-			++msh->err_count, msh->sub_command[0]);
+			msh->cmd_count, msh->sub_command[0]);
 
 	return (CMD_NOT_FOUND); /* command not found */
 }

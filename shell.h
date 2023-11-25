@@ -143,7 +143,8 @@ void process_non_matching(alias_t *aliases, const char *non_matching, int end);
  * @commands: the inital tokenized commands (splits on semi-colons & newlines)
  * @sub_command: the tokenized version of each command in the commands array
  * @prog_name: the name of we are running
- * @err_count: the number of times an erro has been encountered
+ * @cmd_count: the number of times a command has been executed since the shell
+ * started.
  * @tokens: stores multiple tokens before they are further processed
  * @token: a single token
  * @exit_code: the exit code of the last executed program
@@ -158,7 +159,7 @@ typedef struct shell
 	char **tokens;
 	char *token;
 	const char *prog_name;
-	size_t err_count;
+	size_t cmd_count;
 	int exit_code;
 } shell_t;
 

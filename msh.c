@@ -32,6 +32,8 @@ int main(int argc, char *argv[])
 
 		n_read = _getline(&msh->line, &len, STDIN_FILENO);
 
+		++msh->cmd_count; /* keep track of the number of inputs to the shell */
+
 		/* check for empty prompt or if Ctrl+D was received */
 		if (n_read == 0)
 		{

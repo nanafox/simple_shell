@@ -26,7 +26,7 @@ int execute_command(const char *pathname, shell_t *msh)
 			if (errno == EACCES)
 			{
 				fprintf(stderr, "%s: %lu: %s\n", msh->prog_name,
-						++msh->err_count, strerror(errno));
+						++msh->cmd_count, strerror(errno));
 				return (126);
 			}
 			perror("execve");
