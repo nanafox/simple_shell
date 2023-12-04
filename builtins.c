@@ -144,7 +144,7 @@ int handle_cd(shell_t *msh)
 
 	getcwd(pwd, BUFF_SIZE);
 	oldpath = (oldpath) ? oldpath : pwd;
-	if (pathname != NULL)
+	if (pathname != NULL && *pathname != '~')
 	{
 		int dash = !_strcmp(pathname, "-") || !_strcmp(pathname, "--");
 
